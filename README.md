@@ -20,14 +20,15 @@ npm install
 cp .env.example .env.local
 # вставь AI_GATEWAY_API_KEY в .env.local
 
-# Web Chat
+# Web Chat (Next.js)
 npm run dev
 
-# eve TUI / HTTP API агента
+# eve TUI / HTTP API агента (по умолчанию :2000)
 npm run dev:eve
 ```
 
-Открой [http://localhost:3000](http://localhost:3000).
+Web Chat: [http://localhost:3000](http://localhost:3000)  
+eve API: `POST http://127.0.0.1:2000/eve/v1/session`
 
 ## Структура агента
 
