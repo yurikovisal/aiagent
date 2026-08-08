@@ -1,0 +1,13 @@
+# Локальная разработка: hot-reload API, открытые порты
+services:
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - ../backend:/app
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    environment:
+      APP_ENV: development
+      LOG_LEVEL: DEBUG

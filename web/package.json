@@ -1,0 +1,10 @@
+{
+  "name": "meza-ai-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"Web admin scaffold starts in phase 1\" && exit 0",
+    "build": "echo \"noop\" && exit 0"
+  }
+}

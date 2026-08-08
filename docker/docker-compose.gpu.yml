@@ -1,0 +1,33 @@
+# Override для GPU-хоста (Windows Docker Desktop + WSL2 + NVIDIA)
+# Использование: docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - meza
+
+  api:
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      GPU_ENABLED: "true"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  ollama_data:
