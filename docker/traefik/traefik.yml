@@ -1,0 +1,14 @@
+# Базовый статический конфиг Traefik (основная конфигурация — через CLI в compose)
+api:
+  dashboard: true
+
+log:
+  level: INFO
+
+providers:
+  docker:
+    exposedByDefault: false
+
+entryPoints:
+  web:
+    address: ":80"
