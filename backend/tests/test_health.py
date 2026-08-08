@@ -17,9 +17,10 @@ def test_health_endpoint_shape():
     assert "minio" in data["dependencies"]
 
 
-def test_chat_stub():
+def test_chat_status_ready():
     app = create_app()
     client = TestClient(app)
     response = client.get("/api/v1/chat/status")
     assert response.status_code == 200
-    assert response.json()["ready"] is False
+    assert response.json()["ready"] is True
+    assert response.json()["streaming"] is True

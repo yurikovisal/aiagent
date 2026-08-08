@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     api_secret_key: str = Field(default="change-me-to-a-long-random-string")
     fernet_key: str = ""
 
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_days: int = 30
+    jwt_algorithm: str = "HS256"
+
     database_url: str = (
         "postgresql+asyncpg://meza:meza_dev_change_me@localhost:5432/meza_ai"
     )
@@ -32,7 +36,17 @@ class Settings(BaseSettings):
 
     ollama_base_url: str = "http://localhost:11434"
     llm_model: str = "qwen3:14b-instruct-q4_K_M"
+    llm_mock: bool = False
     gpu_enabled: bool = False
+    system_prompt: str = (
+        "Ты MEZA AI — локальный ассистент склада и производства. "
+        "Отвечай кратко и по делу на русском. Если данных нет — скажи об этом."
+    )
+
+    langfuse_enabled: bool = False
+    langfuse_host: str = "http://langfuse:3000"
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
 
     cors_origins: list[str] = Field(default_factory=lambda: ["*"])
 

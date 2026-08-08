@@ -4,8 +4,8 @@
 
 | Фаза | Недели | Результат |
 |---|---|---|
-| **0. Каркас** | 1 | docker-compose, FastAPI `/health`, PG+Redis+MinIO, CI |
-| **1. Ядро чата** | 2–3 | Auth JWT, streaming-чат Qwen3, Flutter-чат |
+| **0. Каркас** | 1 | ✅ docker-compose, FastAPI `/health`, PG+Redis+MinIO, CI |
+| **1. Ядро чата** | 2–3 | ✅ Auth JWT, streaming-чат Qwen3/mock, Flutter-чат |
 | **2. RAG** | 4–5 | Ingest, гибридный поиск, реранк, цитаты |
 | **3. Домены** | 6–7 | Tool-calling склад/производство, коннекторы |
 | **4. Зрение** | 8–9 | VLM/OCR/YOLO, накладные, МАФ |
