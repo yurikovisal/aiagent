@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  MEZA API autostart (§61). Install on the Mac mini with:
+    cp infrastructure/launchd/com.atonplus.meza.api.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.atonplus.meza.api.plist
+  Uninstall with:
+    launchctl unload ~/Library/LaunchAgents/com.atonplus.meza.api.plist
+  Adjust the WorkingDirectory / ProgramArguments paths to match the actual
+  checkout location on the Mac mini.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.atonplus.meza.api</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/path/to/meza/apps/api/.venv/bin/uvicorn</string>
+        <string>meza.app:app</string>
+        <string>--host</string>
+        <string>0.0.0.0</string>
+        <string>--port</string>
+        <string>8000</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/path/to/meza/apps/api</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/path/to/meza/storage/logs/api.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/path/to/meza/storage/logs/api.err.log</string>
+</dict>
+</plist>

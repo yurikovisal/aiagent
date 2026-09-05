@@ -1,0 +1,71 @@
+# MEZA — Docker Compose (for hosts with a working Docker daemon, e.g. the target
+# Mac mini). In the environment this repo was built in, the Docker daemon was
+# unavailable, so day-to-day dev used native processes (see Makefile /
+# docs/current-state.md); this file is kept correct and equivalent.
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: meza
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-meza_dev_password}
+      POSTGRES_DB: meza
+    volumes:
+      - meza_pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meza"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - meza_ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+
+  api:
+    build:
+      context: ./apps/api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://meza:${POSTGRES_PASSWORD:-meza_dev_password}@postgres:5432/meza
+      OLLAMA_URL: http://ollama:11434
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./storage:/app/storage
+    ports:
+      - "8000:8000"
+
+  web:
+    build:
+      context: ./apps/web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+
+volumes:
+  meza_pg_data:
+  meza_ollama_data:

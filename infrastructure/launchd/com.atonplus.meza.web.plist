@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- MEZA Web autostart (§61). Build first with `npm run build`, then load this agent. -->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.atonplus.meza.web</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/npm</string>
+        <string>run</string>
+        <string>start</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/path/to/meza/apps/web</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/path/to/meza/storage/logs/web.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/path/to/meza/storage/logs/web.err.log</string>
+</dict>
+</plist>
