@@ -42,3 +42,6 @@ models/
 .idea/
 .vscode/
 *.log
+
+# Next.js build output
+apps/web/.next/

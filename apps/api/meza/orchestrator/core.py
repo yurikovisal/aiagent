@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from meza.agents.base import AgentResult
 from meza.agents.registry import DOMAIN_TO_AGENT, get_agent
 from meza.core.config import get_settings
+from meza.core.db import session_scope
 from meza.core.utils import new_id, utcnow
 from meza.llm.factory import get_llm_provider
 from meza.models import AgentRun, LLMCall
@@ -76,14 +77,24 @@ def _extract_order_number(text: str) -> str | None:
     return m.group(1) if m else None
 
 
-async def _run_domain(domain: str, ctx: ToolContext, request: str, params: dict) -> tuple[str, AgentResult]:
+async def _run_domain(domain: str, user_id: int | None, role: str, run_id: str, request: str, params: dict) -> tuple[str, AgentResult]:
+    """Runs one domain agent to completion, in its OWN database session.
+
+    Agents are fanned out with asyncio.gather (§29), and SQLAlchemy's AsyncSession is not safe
+    for concurrent use from multiple coroutines — sharing one session across parallel agent tasks
+    causes flush/commit races (and can hang the whole request). Each parallel branch therefore
+    gets its own session_scope(), committed independently; the parent orchestration run (the
+    AgentRun bookkeeping row) lives in the caller's session and is finalized after all branches
+    have committed their own tool_calls/audit_log/risk rows.
+    """
     agent_id = DOMAIN_TO_AGENT.get(domain, domain)
     agent = get_agent(agent_id)
     if not agent:
         return domain, AgentResult(status="error", summary=f"Агент для домена '{domain}' не найден.", error="agent_missing")
-    agent_ctx = ToolContext(db=ctx.db, user_id=ctx.user_id, role=ctx.role, run_id=ctx.run_id, agent_id=agent_id)
     try:
-        result = await asyncio.wait_for(agent.handle(agent_ctx, request, params), timeout=agent.timeout_seconds)
+        async with session_scope() as domain_db:
+            agent_ctx = ToolContext(db=domain_db, user_id=user_id, role=role, run_id=run_id, agent_id=agent_id)
+            result = await asyncio.wait_for(agent.handle(agent_ctx, request, params), timeout=agent.timeout_seconds)
     except TimeoutError:
         result = AgentResult(status="error", summary=f"Агент {agent.name} превысил лимит времени.", error="timeout")
     except Exception as exc:  # noqa: BLE001
@@ -156,7 +167,6 @@ async def run_orchestration(
     db.add(run)
     await db.flush()
 
-    ctx = ToolContext(db=db, user_id=user_id, role=role, run_id=run_id, agent_id="meza")
     domains = route_domains(request)
     order_number = _extract_order_number(request)
     params = {"order_number": order_number} if order_number else {}
@@ -168,7 +178,7 @@ async def run_orchestration(
     for domain in domains:
         if status_cb:
             await status_cb({"type": "status", "message": STATUS_LABELS.get(domain, f"Проверяю {domain}...")})
-        tasks.append(_run_domain(domain, ctx, request, params))
+        tasks.append(_run_domain(domain, user_id, role, run_id, request, params))
     results = await asyncio.gather(*tasks)
     domain_results: dict[str, AgentResult] = dict(results)
 
