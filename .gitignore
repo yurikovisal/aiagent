@@ -1,0 +1,44 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*
+
+# data / storage (never commit corporate documents, dumps, models)
+storage/uploads/*
+storage/backups/*
+storage/inbox/*
+storage/*.db
+storage/*.db-*
+!storage/uploads/.gitkeep
+!storage/backups/.gitkeep
+!storage/inbox/.gitkeep
+*.dump
+*.sql.gz
+*.gguf
+models/
+
+# os / editors
+.DS_Store
+.idea/
+.vscode/
+*.log
