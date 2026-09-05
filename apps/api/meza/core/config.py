@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
     rate_limit_per_minute: int = 240
 
-    admin_email: str = "admin@atonplus.local"
+    admin_email: str = "admin@atonplus.internal-demo.kz"
     admin_password: str = "change-me"
 
     demo_data: bool = Field(default=False, description="Set automatically when demo seed was loaded")
