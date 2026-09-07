@@ -10,10 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from meza.api.deps import get_current_user, require_permission
 from meza.core.config import get_settings
 from meza.core.db import get_db
+from meza.core.logging import get_logger
 from meza.core.rbac import Permission
 from meza.core.utils import utcnow
-from meza.models import Document, User
-from meza.services.documents import ALLOWED_EXTENSIONS, classify_document, extract_text
+from meza.llm.factory import get_llm_provider
+from meza.models import Document, DocumentChunk, User
+from meza.services.documents import ALLOWED_EXTENSIONS, chunk_text, classify_document, extract_text
+
+logger = get_logger("meza.documents")
 
 router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 
@@ -62,5 +66,20 @@ async def upload_document(file: UploadFile = File(...), user: User = Depends(get
         text_content=text[:200_000], uploaded_by=user.id,
     )
     db.add(doc)
+    await db.flush()
+
+    # Chunk + embed for semantic search (§18/§26 knowledge base). Best-effort: a document is
+    # still usable via keyword search even if embedding fails or the local LLM is unreachable.
+    settings2 = get_settings()
+    provider = get_llm_provider()
+    if provider is not None and text.strip():
+        chunks = chunk_text(text)
+        try:
+            vectors = await provider.embed(chunks, model=settings2.embedding_model)
+            for i, (chunk, vector) in enumerate(zip(chunks, vectors, strict=False)):
+                db.add(DocumentChunk(document_id=doc.id, chunk_index=i, content=chunk, embedding=vector, embedding_model=settings2.embedding_model))
+        except Exception as exc:  # noqa: BLE001
+            logger.info(f"embedding failed for document {doc.id}: {exc}")
+
     await db.commit()
     return doc.as_dict()

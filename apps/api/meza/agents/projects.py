@@ -13,9 +13,9 @@ class ProjectManagerAgent(Agent):
     allowed_tools = ["get_overdue_tasks"]
     risk_level = "LOW"
 
-    async def handle(self, ctx: ToolContext, request: str, params: dict | None = None) -> AgentResult:
+    async def handle(self, ctx: ToolContext, request: str, params: dict | None = None, budget: Budget | None = None) -> AgentResult:
         params = params or {}
-        budget = Budget(8, 10, 1)
+        budget = budget or Budget(8, 10, 1)
         result = await execute_tool(ctx.db, tool_name="get_overdue_tasks", params={"department_id": params.get("department_id")}, ctx=ctx, budget=budget)
         if not result.ok:
             return AgentResult(status="error", summary=result.error or "Ошибка.", error=result.error)

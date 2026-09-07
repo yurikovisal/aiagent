@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
+from meza.orchestrator.executor import Budget
 from meza.tools.base import ToolContext
 
 
@@ -58,7 +59,18 @@ class Agent(ABC):
     timeout_seconds: int = 60
 
     @abstractmethod
-    async def handle(self, ctx: ToolContext, request: str, params: dict | None = None) -> AgentResult: ...
+    async def handle(self, ctx: ToolContext, request: str, params: dict | None = None, budget: Budget | None = None) -> AgentResult: ...
+
+    async def reason(self, ctx: ToolContext, request: str, budget: Budget, params_hint: dict | None = None) -> AgentResult | None:
+        """Let the local LLM decide which of this agent's tools to call and with what
+        parameters, interpreting free text (§28). Returns None if the LLM is unavailable or
+        gathered nothing — callers must fall back to their own deterministic logic (§63)."""
+        from meza.orchestrator.reasoning import run_reasoning_agent
+
+        return await run_reasoning_agent(
+            agent_name=self.name, agent_description=self.description, allowed_tools=self.allowed_tools,
+            ctx=ctx, budget=budget, request=request, params_hint=params_hint,
+        )
 
     def manifest(self) -> dict:
         return {

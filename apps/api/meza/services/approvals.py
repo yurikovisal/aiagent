@@ -54,6 +54,27 @@ async def propose_purchase_request(
     return approval
 
 
+async def propose_business_memory(
+    db: AsyncSession, *, key: str, content: str, category: str, agent_id: str, user_id: int | None, run_id: str | None,
+) -> Approval:
+    approval = Approval(
+        title=f"Сохранить в базу знаний: {key}",
+        description=content,
+        tool_name="remember_business_fact",
+        parameters={"key": key, "content": content, "category": category},
+        risk=ToolRisk.WRITE_LOW_RISK.value,
+        status="PENDING",
+        proposed_by_agent=agent_id,
+        proposed_by_user_id=user_id,
+        run_id=run_id,
+        evidence=[{"fact": content, "source": "meza_agent", "confidence": 1.0}],
+        created_at=utcnow(),
+    )
+    db.add(approval)
+    await db.flush()
+    return approval
+
+
 async def decide_approval(db: AsyncSession, approval_id: int, *, decision: str, user_id: int, role: str, comment: str = "") -> Approval:
     approval = await db.get(Approval, approval_id)
     if not approval:
@@ -99,6 +120,16 @@ async def _execute_approval(db: AsyncSession, approval: Approval) -> None:
         db.add(pr)
         await db.flush()
         approval.execution_result = {"purchase_request_id": pr.id, "number": pr.number}
+        approval.status = "EXECUTED"
+    elif approval.tool_name == "remember_business_fact":
+        from meza.services import business_memory
+
+        params = approval.parameters
+        entry = await business_memory.propose(db, key=params["key"], content=params["content"], category=params.get("category", "general"))
+        entry.confirmed = True
+        entry.confirmed_by_user_id = approval.decided_by_user_id
+        await db.flush()
+        approval.execution_result = {"business_memory_id": entry.id}
         approval.status = "EXECUTED"
     else:
         approval.status = "EXECUTED"

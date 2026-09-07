@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from meza.agents.base import Agent, AgentResult
+from meza.orchestrator.executor import Budget
 from meza.services import risk_engine
 from meza.tools.base import ToolContext
 
@@ -16,7 +17,7 @@ class AnalyticsAgent(Agent):
     allowed_tools = []
     risk_level = "LOW"
 
-    async def handle(self, ctx: ToolContext, request: str, params: dict | None = None) -> AgentResult:
+    async def handle(self, ctx: ToolContext, request: str, params: dict | None = None, budget: Budget | None = None) -> AgentResult:
         await risk_engine.run_all_rules(ctx.db)
         risks = await risk_engine.list_open_risks(ctx.db, limit=100)
         by_domain: dict[str, int] = {}

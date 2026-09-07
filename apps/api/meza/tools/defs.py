@@ -13,6 +13,7 @@ from meza.core.utils import today, utcnow
 from meza.models import (
     Customer,
     Deal,
+    Department,
     Document,
     Employee,
     Material,
@@ -25,11 +26,13 @@ from meza.models import (
     Stock,
     Supplier,
     Task,
+    Tender,
     WorkCenter,
 )
 from meza.rules.finance import compute_margin, explain_variance
 from meza.rules.inventory import IncomingShipment, check_availability
 from meza.rules.production import StageNode, propagate_delay
+from meza.rules.tenders import analyze_fit
 from meza.services import finance as finance_svc
 from meza.services import production as production_svc
 from meza.services import warehouse as warehouse_svc
@@ -112,7 +115,10 @@ class GetInventoryTool(Tool):
     description = "Остатки материала на складе (в наличии, в резерве, доступно)."
     risk = ToolRisk.READ
     required_permission = Permission.READ_WAREHOUSE
-    input_schema = {"type": "object", "properties": {"material_sku": {"type": "string"}, "material_name": {"type": "string"}}}
+    input_schema = {"type": "object", "properties": {
+        "material_sku": {"type": "string", "description": "Точный складской код (SKU), если он известен."},
+        "material_name": {"type": "string", "description": "Название материала как в запросе пользователя (предпочтительно, если точный SKU неизвестен)."},
+    }}
 
     async def run(self, ctx: ToolContext, material_sku: str | None = None, material_name: str | None = None, **_) -> ToolResult:
         material = await warehouse_svc.find_material(ctx.db, sku=material_sku, name=material_name)
@@ -138,8 +144,8 @@ class CheckMaterialAvailabilityTool(Tool):
     input_schema = {
         "type": "object",
         "properties": {
-            "material_sku": {"type": "string"},
-            "material_name": {"type": "string"},
+            "material_sku": {"type": "string", "description": "Точный складской код (SKU), если он известен."},
+            "material_name": {"type": "string", "description": "Название материала как в запросе пользователя (предпочтительно, если точный SKU неизвестен)."},
             "required_quantity": {"type": "number"},
             "needed_by": {"type": "string", "format": "date"},
         },
@@ -269,10 +275,12 @@ class SearchDocumentsTool(Tool):
     input_schema = {"type": "object", "properties": {"query": {"type": "string"}, "doc_type": {"type": "string"}, "limit": {"type": "integer"}}}
 
     async def run(self, ctx: ToolContext, query: str, doc_type: str | None = None, limit: int = 10, **_) -> ToolResult:
-        from meza.services.search import search_documents
+        from meza.services.search import search_documents_hybrid
 
-        rows = await search_documents(ctx.db, query, doc_type=doc_type, limit=limit)
-        return ToolResult(ok=True, data=rows, summary=f"Найдено документов: {len(rows)}.", sources=[_source("documents", "search")])
+        rows = await search_documents_hybrid(ctx.db, query, doc_type=doc_type, limit=limit)
+        semantic_count = sum(1 for r in rows if r.get("matched_via") == "semantic")
+        summary = f"Найдено документов: {len(rows)}." + (f" (из них {semantic_count} по смыслу)" if semantic_count else "")
+        return ToolResult(ok=True, data=rows, summary=summary, sources=[_source("documents", "search")])
 
 
 register(SearchDocumentsTool())
@@ -460,3 +468,131 @@ class SimulateDelayImpactTool(Tool):
 
 
 register(SimulateDelayImpactTool())
+
+
+class ListDepartmentsTool(Tool):
+    name = "list_departments"
+    description = "Список подразделений компании (id, код, название) — используется для поиска id по названию."
+    risk = ToolRisk.READ
+    required_permission = Permission.READ_EMPLOYEES
+    input_schema = {"type": "object", "properties": {}}
+
+    async def run(self, ctx: ToolContext, **_) -> ToolResult:
+        rows = (await ctx.db.execute(select(Department))).scalars().all()
+        data = [{"id": d.id, "code": d.code, "name": d.name} for d in rows]
+        return ToolResult(ok=True, data=data, summary=f"Подразделений: {len(data)}.", sources=[_source("departments", "list")])
+
+
+register(ListDepartmentsTool())
+
+
+class ListTendersTool(Tool):
+    name = "list_tenders"
+    description = "Список тендеров, опционально по статусу (FOUND/ANALYZING/GO/NO_GO/SUBMITTED/WON/LOST)."
+    risk = ToolRisk.READ
+    required_permission = Permission.READ_SALES
+    input_schema = {"type": "object", "properties": {"status": {"type": "string"}, "limit": {"type": "integer"}}}
+
+    async def run(self, ctx: ToolContext, status: str | None = None, limit: int = 20, **_) -> ToolResult:
+        q = select(Tender)
+        if status:
+            q = q.where(Tender.status == status)
+        q = q.order_by(Tender.submission_deadline.asc().nullslast()).limit(limit)
+        rows = (await ctx.db.execute(q)).scalars().all()
+        data = [t.as_dict() for t in rows]
+        return ToolResult(ok=True, data=data, summary=f"Тендеров найдено: {len(data)}.", sources=[_source("tenders", "list")])
+
+
+register(ListTendersTool())
+
+
+class AnalyzeTenderFitTool(Tool):
+    name = "analyze_tender_fit"
+    description = (
+        "Оценить, стоит ли участвовать в тендере: сопоставляет требуемые производственные "
+        "участки с реально доступными у ATON+ и проверяет, хватает ли времени до дедлайна подачи."
+    )
+    risk = ToolRisk.CALCULATE
+    required_permission = Permission.READ_SALES
+    input_schema = {"type": "object", "properties": {"tender_id": {"type": "integer"}}, "required": ["tender_id"]}
+
+    async def run(self, ctx: ToolContext, tender_id: int, **_) -> ToolResult:
+        tender = await ctx.db.get(Tender, tender_id)
+        if not tender:
+            return ToolResult(ok=False, error=f"Тендер {tender_id} не найден.")
+        work_centers = (await ctx.db.execute(select(WorkCenter.code).where(WorkCenter.status == "ACTIVE"))).scalars().all()
+        result = analyze_fit(
+            required_work_centers=tender.required_work_centers or [],
+            available_work_centers=list(work_centers),
+            submission_deadline=tender.submission_deadline,
+            today=today(),
+        )
+        tender.fit_score = result.fit_score
+        tender.analysis = result.as_dict()
+        await ctx.db.flush()
+        return ToolResult(
+            ok=True, data=result.as_dict(),
+            summary=f"Тендер «{tender.title}»: fit_score={result.fit_score:.2f} ({result.verdict}). " + " ".join(result.reasons),
+            sources=[_source("tenders", tender_id), _source("work_centers", "active")],
+        )
+
+
+register(AnalyzeTenderFitTool())
+
+
+class GetBusinessMemoryTool(Tool):
+    name = "get_business_memory"
+    description = (
+        "Найти подтверждённые знания о компании ATON+ (Business Memory) — политики, "
+        "договорённости, стандартные условия с клиентами/поставщиками, подтверждённые людьми. "
+        "Никогда не источник истины для денег/остатков/сроков — только контекст."
+    )
+    risk = ToolRisk.READ
+    required_permission = Permission.USE_MEZA
+    input_schema = {"type": "object", "properties": {"query": {"type": "string"}, "category": {"type": "string"}}}
+
+    async def run(self, ctx: ToolContext, query: str = "", category: str | None = None, **_) -> ToolResult:
+        from meza.services import business_memory
+
+        rows = await business_memory.search(ctx.db, query, category=category)
+        data = [{"key": r.key, "content": r.content, "category": r.category} for r in rows]
+        summary = f"Найдено записей в базе знаний: {len(data)}." if data else "В базе знаний ничего не найдено по этому запросу."
+        return ToolResult(ok=True, data=data, summary=summary, sources=[_source("business_memory", "search")])
+
+
+register(GetBusinessMemoryTool())
+
+
+class RememberBusinessFactTool(Tool):
+    name = "remember_business_fact"
+    description = (
+        "Предложить сохранить факт в базу знаний компании (Business Memory) — например, "
+        "стандартное условие для клиента или устойчивую договорённость. Требует утверждения "
+        "человеком, прежде чем факт станет 'подтверждённым' и будет использоваться агентами."
+    )
+    risk = ToolRisk.WRITE_LOW_RISK
+    required_permission = Permission.USE_MEZA
+    input_schema = {
+        "type": "object",
+        "properties": {
+            "key": {"type": "string", "description": "Короткий заголовок факта."},
+            "content": {"type": "string", "description": "Формулировка факта."},
+            "category": {"type": "string", "description": "Категория, например customer, supplier, policy."},
+        },
+        "required": ["key", "content"],
+    }
+
+    async def run(self, ctx: ToolContext, key: str, content: str, category: str = "general", **_) -> ToolResult:
+        from meza.services.approvals import propose_business_memory
+
+        approval = await propose_business_memory(
+            ctx.db, key=key, content=content, category=category,
+            agent_id=ctx.agent_id, user_id=ctx.user_id, run_id=ctx.run_id,
+        )
+        return ToolResult(
+            ok=True, data={"approval_id": approval.id}, summary=f"Предложено сохранить в базу знаний: «{key}». Ожидает утверждения.",
+            pending_approval_id=approval.id, sources=[_source("business_memory", "propose")],
+        )
+
+
+register(RememberBusinessFactTool())

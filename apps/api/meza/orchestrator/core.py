@@ -91,10 +91,15 @@ async def _run_domain(domain: str, user_id: int | None, role: str, run_id: str, 
     agent = get_agent(agent_id)
     if not agent:
         return domain, AgentResult(status="error", summary=f"Агент для домена '{domain}' не найден.", error="agent_missing")
+    settings = get_settings()
+    # Each domain agent gets its own slice of the per-request budget (§30): the orchestrator's
+    # own bookkeeping (routing, synthesis) doesn't call tools, so the full configured budget is
+    # available to whichever agent(s) actually do the work.
+    budget = Budget(settings.max_agent_steps, settings.max_agent_tool_calls, settings.max_agent_handoffs)
     try:
         async with session_scope() as domain_db:
             agent_ctx = ToolContext(db=domain_db, user_id=user_id, role=role, run_id=run_id, agent_id=agent_id)
-            result = await asyncio.wait_for(agent.handle(agent_ctx, request, params), timeout=agent.timeout_seconds)
+            result = await asyncio.wait_for(agent.handle(agent_ctx, request, params, budget), timeout=agent.timeout_seconds)
     except TimeoutError:
         result = AgentResult(status="error", summary=f"Агент {agent.name} превысил лимит времени.", error="timeout")
     except Exception as exc:  # noqa: BLE001

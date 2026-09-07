@@ -67,3 +67,22 @@ def extract_metadata(text: str) -> dict:
         "dates_found": [f"{d}.{m}.{y}" for d, m, y in dates[:10]],
         "amounts_found": [f"{a.strip()} {cur}" for a, cur in amounts[:10]],
     }
+
+
+MAX_CHUNKS_PER_DOCUMENT = 40
+
+
+def chunk_text(text: str, *, chunk_size: int = 800, overlap: int = 100) -> list[str]:
+    """Simple sliding-window chunker (§18 RAG scope: contracts/specs/regulations, not a general
+    corpus). Capped at MAX_CHUNKS_PER_DOCUMENT so embedding a huge document doesn't stall the
+    upload endpoint on this hardware — a local model embeds one chunk per HTTP round-trip."""
+    text = text.strip()
+    if not text:
+        return []
+    chunks = []
+    start = 0
+    step = max(1, chunk_size - overlap)
+    while start < len(text) and len(chunks) < MAX_CHUNKS_PER_DOCUMENT:
+        chunks.append(text[start : start + chunk_size])
+        start += step
+    return chunks

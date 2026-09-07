@@ -5,6 +5,7 @@ invent facts; every risk/finding it reports came from a tool or the Risk Engine.
 from __future__ import annotations
 
 from meza.agents.base import Agent, AgentResult
+from meza.orchestrator.executor import Budget
 from meza.services import events as events_svc
 from meza.services import risk_engine
 from meza.tools.base import ToolContext
@@ -18,7 +19,7 @@ class ExecutiveAgent(Agent):
     allowed_tools = []
     risk_level = "LOW"
 
-    async def handle(self, ctx: ToolContext, request: str, params: dict | None = None) -> AgentResult:
+    async def handle(self, ctx: ToolContext, request: str, params: dict | None = None, budget: Budget | None = None) -> AgentResult:
         risks = await risk_engine.list_open_risks(ctx.db, limit=100)
         changes = await events_svc.summarize_changes(ctx.db, hours=(params or {}).get("hours", 24))
         critical = [r for r in risks if r["severity"] == "CRITICAL"]

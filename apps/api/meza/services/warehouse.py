@@ -12,12 +12,23 @@ from meza.models import InventoryMovement, Material, PurchaseOrder, Stock
 
 
 async def find_material(db: AsyncSession, *, sku: str | None = None, name: str | None = None) -> Material | None:
+    """Resolve a material from an exact SKU, a name (partial match), or — since callers
+    (including the LLM reasoning loop) don't always distinguish the two cleanly — a value that
+    looks like a name but was passed as `sku`, or vice versa. Tries, in order: exact SKU, name
+    substring, SKU substring, and finally the `sku` value as a name substring."""
     if sku:
         row = (await db.execute(select(Material).where(Material.sku == sku))).scalars().first()
         if row:
             return row
     if name:
         row = (await db.execute(select(Material).where(Material.name.ilike(f"%{name}%")))).scalars().first()
+        if row:
+            return row
+    if sku:
+        row = (await db.execute(select(Material).where(Material.sku.ilike(f"%{sku}%")))).scalars().first()
+        if row:
+            return row
+        row = (await db.execute(select(Material).where(Material.name.ilike(f"%{sku}%")))).scalars().first()
         if row:
             return row
     return None

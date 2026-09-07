@@ -10,12 +10,21 @@ class SalesAgent(Agent):
     name = "Sales Agent"
     description = "Сделки, клиенты, зависшие сделки, follow-up, конверсия."
     capabilities = ["deals", "customers", "stalled_deals"]
-    allowed_tools = ["search_deals"]
+    allowed_tools = ["search_deals", "get_business_memory"]
     risk_level = "LOW"
 
-    async def handle(self, ctx: ToolContext, request: str, params: dict | None = None) -> AgentResult:
+    async def handle(self, ctx: ToolContext, request: str, params: dict | None = None, budget: Budget | None = None) -> AgentResult:
         params = params or {}
-        budget = Budget(8, 10, 1)
+        budget = budget or Budget(8, 10, 1)
+
+        # A targeted question ("покажи сделки на стадии переговоров", "что со сделкой
+        # СтройИнвест") — let the LLM pick the right filter instead of always running the
+        # generic stalled-deal scan.
+        if _looks_targeted(request):
+            reasoned = await self.reason(ctx, request, budget, params_hint=params or None)
+            if reasoned is not None:
+                return reasoned
+
         stalled = await execute_tool(ctx.db, tool_name="search_deals", params={"stalled_days": params.get("stalled_days", 14)}, ctx=ctx, budget=budget)
         if not stalled.ok:
             return AgentResult(status="error", summary=stalled.error or "Ошибка получения сделок.", error=stalled.error)
@@ -34,3 +43,8 @@ class SalesAgent(Agent):
             recommendations=["Назначить follow-up по зависшим сделкам."] if deals else [],
             sources=stalled.sources, confidence=1.0, data={"stalled_deals": deals},
         )
+
+
+def _looks_targeted(request: str) -> bool:
+    lowered = request.lower()
+    return any(w in lowered for w in ("стади", "клиент", "заказчик", "сделка по", "покажи сделк"))

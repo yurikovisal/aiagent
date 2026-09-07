@@ -18,6 +18,7 @@ from meza.api.v1 import (
     imports as imports_api,
     inbox as inbox_api,
     inventory as inventory_api,
+    memory as memory_api,
     meza_chat as meza_chat_api,
     org as org_api,
     orders as orders_api,
@@ -62,7 +63,7 @@ def create_app() -> FastAPI:
         auth_api.router, meza_chat_api.router, orders_api.router, production_api.router,
         inventory_api.router, procurement_api.router, finance_api.router, documents_api.router,
         risks_api.router, approvals_api.router, agents_api.router, system_api.router,
-        imports_api.router, inbox_api.router, search_api.router, org_api.router,
+        imports_api.router, inbox_api.router, search_api.router, org_api.router, memory_api.router,
     ):
         app.include_router(router)
 
