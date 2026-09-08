@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Panel, EmptyState } from "@/components/Panel";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, ApiError } from "@/lib/api";
 
 interface RiskRuleRow {
   id: number;
@@ -21,6 +21,50 @@ interface MemoryRow {
   category: string;
   confirmed: boolean;
   created_at: string;
+}
+
+function ChangePasswordSection() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setMessage(null);
+    try {
+      await apiFetch("/api/v1/auth/change-password", { method: "POST", body: JSON.stringify({ current_password: current, new_password: next }) });
+      setMessage({ text: "Пароль изменён.", ok: true });
+      setCurrent("");
+      setNext("");
+    } catch (err) {
+      setMessage({ text: err instanceof ApiError ? err.message : String(err), ok: false });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Panel title="Сменить пароль">
+      <form onSubmit={submit} className="flex flex-wrap items-end gap-2">
+        <label className="text-xs">
+          <span className="mb-1 block text-base-muted">Текущий пароль</span>
+          <input required type="password" value={current} onChange={(e) => setCurrent(e.target.value)}
+            className="rounded border border-base-border bg-base-panel2 px-2 py-1.5 outline-none focus:border-accent" />
+        </label>
+        <label className="text-xs">
+          <span className="mb-1 block text-base-muted">Новый пароль</span>
+          <input required type="password" minLength={8} value={next} onChange={(e) => setNext(e.target.value)}
+            className="rounded border border-base-border bg-base-panel2 px-2 py-1.5 outline-none focus:border-accent" />
+        </label>
+        <button type="submit" disabled={busy} className="rounded bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-dim disabled:opacity-50">
+          Сохранить
+        </button>
+      </form>
+      {message && <p className={`mt-2 text-xs ${message.ok ? "text-sev-low" : "text-sev-critical"}`}>{message.text}</p>}
+    </Panel>
+  );
 }
 
 function RiskRulesSection() {
@@ -189,6 +233,7 @@ export default function SettingsPage() {
           ))}
         </div>
       </Panel>
+      <ChangePasswordSection />
       <RiskRulesSection />
       <BusinessMemorySection />
       <Panel title="О системе">

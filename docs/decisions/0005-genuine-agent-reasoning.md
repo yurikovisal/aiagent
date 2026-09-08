@@ -65,3 +65,29 @@ Three additional guardrails came out of testing this against the real local mode
   attention" scans on the fast deterministic path; only genuinely targeted free-text questions
   pay the reasoning cost, and the UI streams operational status throughout (§42) so it never
   looks frozen.
+
+## Addendum: the same grounding gap existed at the top-level synthesis, too
+
+Date: 2026-09-08
+
+While wiring Conversation Memory (§26) end-to-end, the same failure class documented above
+turned up one level higher: `meza/orchestrator/core.py::synthesize()` — the final LLM call that
+turns all domain agents' results into MEZA's one answer — is a different code path from the
+per-agent reasoning loop, and it had no equivalent guard. Live-testing "Покажи склад" against
+real (imported) low-stock materials produced: *"Извините, но я не могу предоставить информацию о
+складе. В данный момент у меня нет доступа к данным о конкретных складских запасах."* — a flat
+denial, immediately after the Warehouse agent had successfully returned two below-minimum
+materials.
+
+Fix: `synthesize()` now checks its own LLM output against a short list of denial/no-access
+phrasings (`_denies_available_data`) and falls back to the deterministic join of domain
+summaries — the same fallback already used when the LLM is unreachable — whenever the model
+claims it has no data while `successful` (agent results that actually returned facts) is
+non-empty. Confidence is scored lower (0.65) in that case so the UI's confidence label reflects
+that the LLM's own phrasing was discarded.
+
+This is the second time this exact failure mode was found by testing against the real model
+rather than trusting the design on paper — worth remembering for any future LLM-facing code path
+in MEZA: assume a small local model will occasionally narrate the opposite of its own inputs, and
+grounding checks belong at every layer that turns tool/agent results into user-facing text, not
+just the innermost one.

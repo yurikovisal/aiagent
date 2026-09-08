@@ -9,7 +9,7 @@ from meza.api.deps import COOKIE_NAME, get_current_user
 from meza.core.config import get_settings
 from meza.core.db import get_db
 from meza.core.rbac import permissions_for
-from meza.core.security import create_access_token, verify_password
+from meza.core.security import create_access_token, hash_password, verify_password
 from meza.core.utils import utcnow
 from meza.models import User
 
@@ -58,3 +58,21 @@ async def me(user: User = Depends(get_current_user)):
         "department": user.department,
         "permissions": sorted(p.value for p in permissions_for(user.role)),
     }
+
+
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.post("/change-password")
+async def change_password(payload: ChangePassword, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Self-service password change — anyone can change their OWN password without needing
+    MANAGE_USERS (that permission is for an admin changing someone else's account)."""
+    if not verify_password(payload.current_password, user.password_hash):
+        raise HTTPException(401, "Текущий пароль неверен.")
+    if len(payload.new_password) < 8:
+        raise HTTPException(422, "Новый пароль должен быть не короче 8 символов.")
+    user.password_hash = hash_password(payload.new_password)
+    await db.commit()
+    return {"ok": True}

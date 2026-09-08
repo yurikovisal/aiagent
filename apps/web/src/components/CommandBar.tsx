@@ -16,6 +16,11 @@ export function CommandBar() {
   const [expandedRisk, setExpandedRisk] = useState<number | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  // Conversation Memory (§26): kept across asks within this browser tab so a follow-up
+  // ("а по нему на складе?") lands in the same conversation and the LLM sees recent turns as
+  // context. Reset via "Новый диалог" — never silently, so the user always knows what MEZA
+  // still "remembers".
+  const conversationIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -37,12 +42,13 @@ export function CommandBar() {
     try {
       const ws = new WebSocket(apiWsUrl());
       wsRef.current = ws;
-      ws.onopen = () => ws.send(JSON.stringify({ message }));
+      ws.onopen = () => ws.send(JSON.stringify({ message, conversation_id: conversationIdRef.current }));
       ws.onmessage = (evt) => {
         const data: StatusEvent & Partial<OrchestrationResult> = JSON.parse(evt.data);
         if (data.type === "status" && data.message) {
           setStatusLog((log) => [...log, data.message as string]);
         } else if (data.type === "result") {
+          if (data.conversation_id) conversationIdRef.current = data.conversation_id;
           setResult(data as unknown as OrchestrationResult);
           setBusy(false);
           ws.close();
@@ -81,6 +87,14 @@ export function CommandBar() {
     setStatusLog([]);
   }
 
+  function newConversation() {
+    conversationIdRef.current = null;
+    setQuery("");
+    setResult(null);
+    setStatusLog([]);
+    inputRef.current?.focus();
+  }
+
   return (
     <>
       <button
@@ -107,6 +121,12 @@ export function CommandBar() {
                 className="flex-1 bg-transparent text-sm outline-none placeholder:text-base-muted"
               />
               {busy && <span className="pulse-dot text-xs text-accent">●</span>}
+              {conversationIdRef.current && !busy && (
+                <button type="button" onClick={newConversation} title="Начать новый диалог (MEZA забудет контекст текущего)"
+                  className="text-[11px] text-base-muted hover:text-accent">
+                  Новый диалог
+                </button>
+              )}
             </form>
 
             <div className="max-h-[60vh] overflow-y-auto px-4 py-3">

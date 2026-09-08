@@ -107,10 +107,18 @@ async def _run_domain(domain: str, user_id: int | None, role: str, run_id: str, 
     return domain, result
 
 
-async def synthesize(request: str, domain_results: dict[str, AgentResult], run_id: str) -> tuple[str, float, dict | None]:
+async def synthesize(
+    request: str, domain_results: dict[str, AgentResult], run_id: str, history: list[dict] | None = None,
+) -> tuple[str, float, dict | None]:
     """Turn the merged structured results into one short executive-style answer.
     Uses the local LLM if available; falls back to a deterministic summary otherwise —
-    the system must never go blank just because the LLM is unreachable (§63)."""
+    the system must never go blank just because the LLM is unreachable (§63).
+
+    `history` (Conversation Memory, §26) is prior turns in the same conversation — it may help
+    interpret a follow-up ("а по нему на складе?"), but it is never a source of facts. Every
+    number in the answer still comes only from `domain_results`, which is itself assembled from
+    tool calls against the live DB.
+    """
     successful = {d: r for d, r in domain_results.items() if r.status == "success"}
     if not successful:
         return "Недостаточно данных для ответа. " + "; ".join(r.summary for r in domain_results.values() if r.summary), 0.3, None
@@ -130,28 +138,48 @@ async def synthesize(request: str, domain_results: dict[str, AgentResult], run_i
 
     llm_call_record = None
     try:
-        resp = await provider.chat(
-            [
-                {"role": "system", "content": (
-                    "Ты — MEZA, внутренний AI операционной системы ATON+. Отвечай кратко и по делу на "
-                    "русском языке, только на основе предоставленных фактов. Не придумывай данные, которых нет "
-                    "в контексте. Если данных недостаточно — так и скажи."
-                )},
-                {"role": "user", "content": f"Вопрос: {request}\n\nДанные от агентов:\n{context_text}\n\nСформулируй краткий executive-ответ (3-6 предложений)."},
-            ],
-            model=settings.effective_model,
-            temperature=0.2,
-        )
+        messages = [
+            {"role": "system", "content": (
+                "Ты — MEZA, внутренний AI операционной системы ATON+. Отвечай кратко и по делу на "
+                "русском языке, только на основе предоставленных фактов. Не придумывай данные, которых нет "
+                "в контексте. Если данных недостаточно — так и скажи. Предыдущие реплики диалога (если есть) "
+                "помогают понять, о чём именно спрашивает пользователь, но сами по себе не источник фактов."
+            )},
+        ]
+        for turn in (history or [])[-6:]:
+            messages.append({"role": turn["role"] if turn["role"] in ("user", "assistant") else "user", "content": turn["content"]})
+        messages.append({"role": "user", "content": f"Вопрос: {request}\n\nДанные от агентов:\n{context_text}\n\nСформулируй краткий executive-ответ (3-6 предложений)."})
+        resp = await provider.chat(messages, model=settings.effective_model, temperature=0.2)
         llm_call_record = {
             "provider": provider.name, "model": resp.model, "prompt_tokens": resp.usage.prompt_tokens,
             "completion_tokens": resp.usage.completion_tokens, "generation_ms": resp.usage.generation_ms,
             "tokens_per_sec": resp.usage.tokens_per_sec,
         }
         text = resp.text.strip() or " ".join(r.summary for r in successful.values())
+        if _denies_available_data(text):
+            # A small local model will occasionally claim "I don't have access to that data" or
+            # "insufficient data" in its free-text synthesis even though `successful` — the
+            # agents' own tool-grounded results — proves otherwise. This mirrors the per-agent
+            # reasoning-loop grounding fix (ADR 0005): never let the LLM's own phrasing override
+            # what the tools actually returned (§9/§66). Fall back to the deterministic join.
+            text = " ".join(r.summary for r in successful.values())
+            return text, 0.65, llm_call_record
         return text, 0.9, llm_call_record
     except Exception:  # noqa: BLE001
         text = " ".join(r.summary for r in successful.values())
         return text + " (LLM недоступна — использован детерминированный ответ.)", 0.6, llm_call_record
+
+
+_DENIAL_PHRASES = (
+    "не могу предоставить", "нет доступа", "не имею доступа", "недостаточно данных",
+    "не располагаю данными", "у меня нет информации", "не могу получить доступ",
+    "не могу предоставить информацию",
+)
+
+
+def _denies_available_data(text: str) -> bool:
+    lowered = text.lower()
+    return any(phrase in lowered for phrase in _DENIAL_PHRASES)
 
 
 async def run_orchestration(
@@ -161,6 +189,7 @@ async def run_orchestration(
     user_id: int | None,
     role: str,
     conversation_id: int | None = None,
+    history: list[dict] | None = None,
     status_cb=None,
 ) -> OrchestrationResult:
     settings = get_settings()
@@ -196,7 +225,7 @@ async def run_orchestration(
     all_actions = [a for res in domain_results.values() for a in res.actions_proposed]
     all_sources = [s for res in domain_results.values() for s in res.sources]
 
-    summary_text, conf, llm_meta = await synthesize(request, domain_results, run_id)
+    summary_text, conf, llm_meta = await synthesize(request, domain_results, run_id, history)
 
     overall_status = "success" if any(r.status == "success" for r in domain_results.values()) else "partial"
     if all(r.status == "insufficient_data" for r in domain_results.values()):

@@ -107,3 +107,30 @@ async def test_creating_duplicate_email_conflicts(client, db_session):
 async def test_unauthenticated_request_rejected(client):
     resp = await client.get("/api/v1/users")
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_self_service_password_change(client, db_session):
+    token = await _login_as(client, db_session, Role.VIEWER.value)
+    headers = {"Authorization": f"Bearer {token}"}
+    resp = await client.post("/api/v1/auth/change-password", json={"current_password": "pw12345", "new_password": "newpassword123"}, headers=headers)
+    assert resp.status_code == 200
+
+    relogin = await client.post("/api/v1/auth/login", json={"email": f"{Role.VIEWER.value.lower()}@atonplus-test.example.kz", "password": "newpassword123"})
+    assert relogin.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_password_change_rejects_wrong_current_password(client, db_session):
+    token = await _login_as(client, db_session, Role.VIEWER.value)
+    headers = {"Authorization": f"Bearer {token}"}
+    resp = await client.post("/api/v1/auth/change-password", json={"current_password": "wrong", "new_password": "newpassword123"}, headers=headers)
+    assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_password_change_rejects_short_password(client, db_session):
+    token = await _login_as(client, db_session, Role.VIEWER.value)
+    headers = {"Authorization": f"Bearer {token}"}
+    resp = await client.post("/api/v1/auth/change-password", json={"current_password": "pw12345", "new_password": "short"}, headers=headers)
+    assert resp.status_code == 422
