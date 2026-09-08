@@ -598,6 +598,74 @@ class RememberBusinessFactTool(Tool):
 register(RememberBusinessFactTool())
 
 
+class ListContentItemsTool(Tool):
+    name = "list_content_items"
+    description = "Список материалов контента (посты, статьи, рассылки) с фильтром по статусу."
+    risk = ToolRisk.READ
+    required_permission = Permission.USE_MEZA
+    input_schema = {
+        "type": "object",
+        "properties": {
+            "status": {"type": "string", "description": "DRAFT, REVIEW, APPROVED или PUBLISHED."},
+        },
+    }
+
+    async def run(self, ctx: ToolContext, status: str | None = None, **_) -> ToolResult:
+        from meza.models import ContentItem
+
+        q = select(ContentItem)
+        if status:
+            q = q.where(ContentItem.status == status.upper())
+        rows = (await ctx.db.execute(q.order_by(ContentItem.created_at.desc()))).scalars().all()
+        items = [{"id": r.id, "title": r.title, "channel": r.channel, "status": r.status} for r in rows]
+        return ToolResult(
+            ok=True, data={"items": items}, summary=f"Материалов контента: {len(items)}.",
+            sources=[_source("content_items", "list")],
+        )
+
+
+register(ListContentItemsTool())
+
+
+class PublishContentTool(Tool):
+    name = "publish_content"
+    description = (
+        "Предложить публикацию материала контента в канал (сайт, соцсети, рассылка). "
+        "§21: публикация — внешнее действие (EXTERNAL_ACTION), выполняется только после "
+        "утверждения человеком, автоматическая публикация запрещена."
+    )
+    risk = ToolRisk.EXTERNAL_ACTION
+    required_permission = Permission.USE_MEZA
+    input_schema = {
+        "type": "object",
+        "properties": {
+            "content_id": {"type": "integer", "description": "ID материала контента."},
+        },
+        "required": ["content_id"],
+    }
+
+    async def run(self, ctx: ToolContext, content_id: int, **_) -> ToolResult:
+        from meza.models import ContentItem
+        from meza.services.approvals import propose_content_publish
+
+        item = await ctx.db.get(ContentItem, content_id)
+        if not item:
+            return ToolResult(ok=False, error=f"Материал контента #{content_id} не найден.")
+        if item.status == "PUBLISHED":
+            return ToolResult(ok=True, data={"content_id": content_id}, summary=f"Материал «{item.title}» уже опубликован.")
+        approval = await propose_content_publish(
+            ctx.db, content_id=item.id, title=item.title, channel=item.channel or "не указан",
+            agent_id=ctx.agent_id, user_id=ctx.user_id, run_id=ctx.run_id,
+        )
+        return ToolResult(
+            ok=True, data={"approval_id": approval.id}, summary=f"Предложена публикация «{item.title}». Ожидает утверждения.",
+            pending_approval_id=approval.id, sources=[_source("content_items", item.id)],
+        )
+
+
+register(PublishContentTool())
+
+
 class GetProjectDelayAnalysisTool(Tool):
     name = "get_project_delay_analysis"
     description = (
@@ -650,3 +718,67 @@ class SearchProjectsTool(Tool):
 
 
 register(SearchProjectsTool())
+
+
+class AnswerDocumentQuestionTool(Tool):
+    name = "answer_document_question"
+    description = (
+        "Ответить на вопрос по содержимому документов (Q&A), используя семантический поиск по "
+        "фрагментам документов. Отвечает только на основе найденных фрагментов; если ответа нет "
+        "в документах — прямо об этом сообщает."
+    )
+    risk = ToolRisk.READ
+    required_permission = Permission.READ_DOCUMENTS
+    input_schema = {
+        "type": "object",
+        "properties": {
+            "question": {"type": "string"},
+            "document_id": {"type": "integer", "description": "Ограничить поиск одним документом, если известен."},
+        },
+        "required": ["question"],
+    }
+
+    async def run(self, ctx: ToolContext, question: str, document_id: int | None = None, **_) -> ToolResult:
+        from meza.core.config import get_settings
+        from meza.llm.factory import get_llm_provider
+        from meza.models import DocumentChunk
+        from meza.services.search import semantic_search_chunks
+
+        provider = get_llm_provider()
+        if provider is None:
+            return ToolResult(ok=False, error="Локальная LLM недоступна — Q&A по документам сейчас невозможен.")
+
+        settings = get_settings()
+        try:
+            [query_embedding] = await provider.embed([question], model=settings.embedding_model)
+        except Exception as exc:  # noqa: BLE001
+            return ToolResult(ok=False, error=f"Не удалось построить эмбеддинг запроса: {exc}")
+
+        chunks = await semantic_search_chunks(ctx.db, query_embedding, limit=6, min_score=0.35)
+        if document_id:
+            chunks = [c for c in chunks if c["document_id"] == document_id]
+        if not chunks:
+            return ToolResult(ok=True, data={"answer": None, "excerpts": []},
+                               summary="В документах не найдено релевантных фрагментов для ответа на этот вопрос.")
+
+        excerpt_text = "\n\n".join(f"[Фрагмент {i + 1} из документа {c['document_id']}]\n{c['content']}" for i, c in enumerate(chunks))
+        try:
+            resp = await provider.chat(
+                [
+                    {"role": "system", "content": (
+                        "Отвечай на вопрос СТРОГО на основе приведённых фрагментов документов. "
+                        "Если ответа нет во фрагментах — так и скажи, не выдумывай. Отвечай на русском, кратко."
+                    )},
+                    {"role": "user", "content": f"Вопрос: {question}\n\nФрагменты документов:\n{excerpt_text}"},
+                ],
+                model=settings.effective_model, temperature=0.1,
+            )
+            answer = resp.text.strip()
+        except Exception as exc:  # noqa: BLE001
+            return ToolResult(ok=False, error=f"Ошибка LLM при формировании ответа: {exc}")
+
+        sources = [_source("document_chunks", c["document_id"], {"chunk_index": c["chunk_index"], "relevance": c["score"]}) for c in chunks]
+        return ToolResult(ok=True, data={"answer": answer, "excerpts": chunks}, summary=answer, sources=sources)
+
+
+register(AnswerDocumentQuestionTool())

@@ -25,6 +25,7 @@ class Permission(StrEnum):
     READ_FINANCE = "read:finance"
     READ_DOCUMENTS = "read:documents"
     READ_EMPLOYEES = "read:employees"
+    READ_MARKETING = "read:marketing"
     READ_AI_OPS = "read:ai_ops"
     READ_AUDIT = "read:audit"
     # writing
@@ -36,6 +37,7 @@ class Permission(StrEnum):
     WRITE_FINANCE = "write:finance"
     WRITE_DOCUMENTS = "write:documents"
     WRITE_EMPLOYEES = "write:employees"
+    WRITE_MARKETING = "write:marketing"
     # ai / governance
     USE_MEZA = "use:meza"
     APPROVE_LOW = "approve:low_risk"
@@ -61,6 +63,7 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.WRITE_WAREHOUSE,
         Permission.WRITE_PROCUREMENT,
         Permission.WRITE_DOCUMENTS,
+        Permission.WRITE_MARKETING,
         Permission.USE_MEZA,
         Permission.APPROVE_LOW,
         Permission.IMPORT_DATA,
@@ -73,9 +76,11 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.READ_WAREHOUSE,
         Permission.READ_PROCUREMENT,
         Permission.READ_DOCUMENTS,
+        Permission.READ_MARKETING,
         Permission.WRITE_SALES,
         Permission.WRITE_PROJECTS,
         Permission.WRITE_DOCUMENTS,
+        Permission.WRITE_MARKETING,
         Permission.USE_MEZA,
     },
     Role.EMPLOYEE: {
@@ -84,9 +89,10 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.READ_PRODUCTION,
         Permission.READ_WAREHOUSE,
         Permission.READ_DOCUMENTS,
+        Permission.READ_MARKETING,
         Permission.USE_MEZA,
     },
-    Role.VIEWER: {Permission.READ_OVERVIEW, Permission.READ_PRODUCTION, Permission.READ_WAREHOUSE},
+    Role.VIEWER: {Permission.READ_OVERVIEW, Permission.READ_PRODUCTION, Permission.READ_WAREHOUSE, Permission.READ_MARKETING},
 }
 
 

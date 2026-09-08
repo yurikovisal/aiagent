@@ -164,6 +164,17 @@ async def synthesize(
             # what the tools actually returned (§9/§66). Fall back to the deterministic join.
             text = " ".join(r.summary for r in successful.values())
             return text, 0.65, llm_call_record
+        if _has_pending_approval_action(successful):
+            # An EXTERNAL_ACTION/WRITE tool this turn only *proposed* a change (it is sitting in
+            # the Approval Engine, status PENDING) — a high-stakes case where free-text synthesis
+            # from a small local model has been observed to narrate it as already done
+            # ("успешно опубликован"), ask for information already supplied, or otherwise diverge
+            # from what actually happened. Rather than pattern-match every way it can misphrase
+            # this (a losing game against a 1.5B model — ADR 0005), always prefer the
+            # tool-grounded per-domain summary here: a human must never be able to read this
+            # answer as "done" when an approval is still pending (§21/§23).
+            text = " ".join(r.summary for r in successful.values())
+            return text, 0.65, llm_call_record
         return text, 0.9, llm_call_record
     except Exception:  # noqa: BLE001
         text = " ".join(r.summary for r in successful.values())
@@ -173,13 +184,29 @@ async def synthesize(
 _DENIAL_PHRASES = (
     "не могу предоставить", "нет доступа", "не имею доступа", "недостаточно данных",
     "не располагаю данными", "у меня нет информации", "не могу получить доступ",
-    "не могу предоставить информацию",
+)
+
+# Stem-based fallback (ADR 0005 is a recurring bug class — the small local model keeps inventing
+# new phrasings of "I can't do this" despite the tools it called succeeding, so a fixed phrase
+# list is chasing whatever wording it happened to use last time). Any first-person inability
+# claim ("не могу ...", "не в состоянии ...", "невозможно выполнить ...") is treated the same way
+# as an exact _DENIAL_PHRASES hit: grounded tool results always win over the LLM's own framing.
+_DENIAL_STEM_RE = re.compile(
+    r"(не\s+могу\b|не\s+в\s+состоянии\b|невозможно\s+выполнить|не\s+удалось\s+выполнить|не\s+способен\b)",
+    re.I,
 )
 
 
 def _denies_available_data(text: str) -> bool:
     lowered = text.lower()
-    return any(phrase in lowered for phrase in _DENIAL_PHRASES)
+    return any(phrase in lowered for phrase in _DENIAL_PHRASES) or bool(_DENIAL_STEM_RE.search(lowered))
+
+
+def _has_pending_approval_action(successful: dict[str, AgentResult]) -> bool:
+    """True if any domain result this turn proposed a WRITE/EXTERNAL_ACTION tool call that is now
+    sitting in the Approval Engine awaiting a human decision (a `pending_approval_id` on one of
+    its actions_proposed)."""
+    return any(action.get("pending_approval_id") for r in successful.values() for action in r.actions_proposed)
 
 
 async def run_orchestration(

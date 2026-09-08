@@ -15,7 +15,7 @@ from meza.core.rbac import Permission
 from meza.core.utils import utcnow
 from meza.llm.factory import get_llm_provider
 from meza.models import Document, DocumentChunk, User
-from meza.services.documents import ALLOWED_EXTENSIONS, chunk_text, classify_document, extract_text
+from meza.services.documents import ALLOWED_EXTENSIONS, chunk_text, classify_document, extract_text, summarize_text
 
 logger = get_logger("meza.documents")
 
@@ -80,6 +80,7 @@ async def upload_document(file: UploadFile = File(...), user: User = Depends(get
                 db.add(DocumentChunk(document_id=doc.id, chunk_index=i, content=chunk, embedding=vector, embedding_model=settings2.embedding_model))
         except Exception as exc:  # noqa: BLE001
             logger.info(f"embedding failed for document {doc.id}: {exc}")
+        doc.summary = await summarize_text(text, doc_type=doc_type)
 
     await db.commit()
     return doc.as_dict()

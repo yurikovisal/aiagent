@@ -12,10 +12,12 @@ class DocumentAgent(Agent):
         "Поиск, классификация и Q&A по документам (договоры, спецификации, регламенты). "
         "Извлекай из запроса ключевые слова для поиска и, если запрос называет тип документа "
         "(договор, счёт, спецификация, регламент, инструкция, техдокумент, отчёт), передавай его "
-        "как doc_type (CONTRACT, INVOICE, SPECIFICATION, REGULATION, INSTRUCTION, TECH_DOC, REPORT)."
+        "как doc_type (CONTRACT, INVOICE, SPECIFICATION, REGULATION, INSTRUCTION, TECH_DOC, REPORT). "
+        "Если вопрос спрашивает о конкретных условиях/сроках/суммах ВНУТРИ документа (а не просто "
+        "'найди документ'), используй answer_document_question вместо search_documents."
     )
     capabilities = ["search", "qa"]
-    allowed_tools = ["search_documents", "get_business_memory"]
+    allowed_tools = ["search_documents", "answer_document_question", "get_business_memory"]
     risk_level = "LOW"
 
     async def handle(self, ctx: ToolContext, request: str, params: dict | None = None, budget: Budget | None = None) -> AgentResult:

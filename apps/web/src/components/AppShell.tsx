@@ -15,6 +15,7 @@ const NAV = [
   { href: "/warehouse", label: "Warehouse" },
   { href: "/procurement", label: "Procurement" },
   { href: "/finance", label: "Finance" },
+  { href: "/marketing", label: "Marketing", permission: "read:marketing" },
   { href: "/documents", label: "Documents" },
   { href: "/inbox", label: "Inbox" },
   { href: "/import", label: "Import" },

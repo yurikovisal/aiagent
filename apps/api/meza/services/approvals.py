@@ -81,7 +81,11 @@ async def decide_approval(db: AsyncSession, approval_id: int, *, decision: str, 
         raise NotFoundError(f"Approval {approval_id} not found")
     if approval.status != "PENDING":
         raise ValidationFailedError(f"Approval {approval_id} is already {approval.status}")
-    required = Permission.APPROVE_HIGH if approval.risk == ToolRisk.WRITE_HIGH_RISK.value else Permission.APPROVE_LOW
+    required = (
+        Permission.APPROVE_HIGH
+        if approval.risk in (ToolRisk.WRITE_HIGH_RISK.value, ToolRisk.EXTERNAL_ACTION.value)
+        else Permission.APPROVE_LOW
+    )
     if not has_permission(role, required):
         from meza.core.errors import PermissionDeniedError
 
@@ -121,6 +125,15 @@ async def _execute_approval(db: AsyncSession, approval: Approval) -> None:
         await db.flush()
         approval.execution_result = {"purchase_request_id": pr.id, "number": pr.number}
         approval.status = "EXECUTED"
+    elif approval.tool_name == "publish_content":
+        from meza.models import ContentItem
+
+        item = await db.get(ContentItem, approval.parameters["content_id"])
+        if item:
+            item.status = "PUBLISHED"
+            item.approval_id = approval.id
+        approval.execution_result = {"content_id": approval.parameters["content_id"], "status": "PUBLISHED"}
+        approval.status = "EXECUTED"
     elif approval.tool_name == "remember_business_fact":
         from meza.services import business_memory
 
@@ -135,3 +148,26 @@ async def _execute_approval(db: AsyncSession, approval: Approval) -> None:
         approval.status = "EXECUTED"
         approval.execution_result = {"note": "no-op: unknown tool_name"}
     await db.flush()
+
+
+async def propose_content_publish(
+    db: AsyncSession, *, content_id: int, title: str, channel: str, agent_id: str, user_id: int | None, run_id: str | None,
+) -> Approval:
+    """§21: no automatic publication without approval — publishing to a real channel is an
+    EXTERNAL_ACTION, the highest-friction tier in the Approval Engine."""
+    approval = Approval(
+        title=f"Опубликовать контент: {title} ({channel})",
+        description=f"Публикация материала «{title}» в канал «{channel}».",
+        tool_name="publish_content",
+        parameters={"content_id": content_id, "title": title, "channel": channel},
+        risk=ToolRisk.EXTERNAL_ACTION.value,
+        status="PENDING",
+        proposed_by_agent=agent_id,
+        proposed_by_user_id=user_id,
+        run_id=run_id,
+        evidence=[{"fact": f"Материал «{title}» готов к публикации в канале {channel}.", "source": "meza_agent", "confidence": 1.0}],
+        created_at=utcnow(),
+    )
+    db.add(approval)
+    await db.flush()
+    return approval

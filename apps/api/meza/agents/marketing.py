@@ -15,11 +15,18 @@ class MarketingAgent(Agent):
     agent_id = "marketing"
     name = "Marketing Agent"
     description = "Контент, кампании, обращения, источники лидов, эффективность (CPL, конверсия)."
-    capabilities = ["campaign_performance", "lead_sources"]
-    allowed_tools = []
+    capabilities = ["campaign_performance", "lead_sources", "content_publish_proposal"]
+    allowed_tools = ["list_content_items", "publish_content", "get_business_memory"]
     risk_level = "LOW"
+    requires_approval = True
 
     async def handle(self, ctx: ToolContext, request: str, params: dict | None = None, budget: Budget | None = None) -> AgentResult:
+        budget = budget or Budget(8, 10, 1)
+        if _looks_publish_related(request):
+            reasoned = await self.reason(ctx, request, budget, params_hint=params or None)
+            if reasoned is not None:
+                return reasoned
+
         campaigns = (await ctx.db.execute(select(Campaign).where(Campaign.status == "ACTIVE"))).scalars().all()
         leads = (await ctx.db.execute(select(Lead))).scalars().all()
         by_source: dict[str, int] = {}
@@ -47,3 +54,8 @@ class MarketingAgent(Agent):
             summary=f"Активных кампаний: {len(campaigns)}. Лидов всего: {len(leads)}.",
             data=data,
         )
+
+
+def _looks_publish_related(request: str) -> bool:
+    lowered = request.lower()
+    return any(w in lowered for w in ("публик", "опублик", "разместить", "выложи", "контент", "рассылк"))

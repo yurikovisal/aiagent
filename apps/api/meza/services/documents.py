@@ -119,3 +119,37 @@ def chunk_text(text: str, *, chunk_size: int = 800, overlap: int = 100) -> list[
         chunks.append(text[start : start + chunk_size])
         start += step
     return chunks
+
+
+MAX_SUMMARY_INPUT_CHARS = 6000
+
+
+async def summarize_text(text: str, *, doc_type: str = "") -> str:
+    """Best-effort LLM summary for the document list view (§18). Returns '' — never raises — if
+    the local LLM is unavailable; the document remains fully usable via full-text/semantic
+    search either way."""
+    text = text.strip()
+    if not text:
+        return ""
+    from meza.core.config import get_settings
+    from meza.llm.factory import get_llm_provider
+
+    provider = get_llm_provider()
+    if provider is None:
+        return ""
+    try:
+        settings = get_settings()
+        resp = await provider.chat(
+            [
+                {"role": "system", "content": (
+                    "Кратко резюмируй документ на русском языке (2-3 предложения). Опирайся только "
+                    "на текст документа, не добавляй ничего от себя."
+                )},
+                {"role": "user", "content": f"Тип документа: {doc_type or 'не определён'}.\n\nТекст:\n{text[:MAX_SUMMARY_INPUT_CHARS]}"},
+            ],
+            model=settings.effective_model,
+            temperature=0.1,
+        )
+        return resp.text.strip()[:1000]
+    except Exception:  # noqa: BLE001
+        return ""
