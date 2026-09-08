@@ -43,3 +43,17 @@
 - Execution budgets (`meza/orchestrator/executor.py::Budget`) bound the
   blast radius of any single request regardless of what the LLM decides to
   do.
+
+## OCR (§18)
+
+Tesseract (with Russian + English language packs) is used for scanned/photographed document
+text extraction (`meza/services/documents.py::ocr_image`). It never raises — a host without
+tesseract installed simply gets an empty string back and the document is still stored, just not
+full-text searchable. Surfaced in `/api/v1/system/health` as the `ocr` check.
+
+## User management (§25)
+
+`/api/v1/users` (list/create/patch) is gated by `MANAGE_USERS`, server-side, matching every other
+permission check in the system. Two invariants enforced in the API (not just the UI): a user can
+never change their own role, and can never deactivate their own account — both would be a self-
+lockout with no recovery path short of direct DB access.

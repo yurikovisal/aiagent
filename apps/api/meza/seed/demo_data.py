@@ -21,6 +21,7 @@ from meza.models import (
     Department,
     Document,
     Employee,
+    EmployeeReport,
     Event,
     Expense,
     KPI,
@@ -84,8 +85,15 @@ async def seed_demo(db: AsyncSession) -> dict:
     await db.flush()
 
     for emp in (emp1, emp2, emp3):
-        db.add(Attendance(employee_id=emp.id, day=today(), status="PRESENT", hours=8, is_demo=True))
+        for days_ago in range(10):
+            status = "SICK" if (emp.id, days_ago) == (emp3.id, 3) else "PRESENT"
+            db.add(Attendance(employee_id=emp.id, day=today() - timedelta(days=days_ago), status=status,
+                               hours=0 if status != "PRESENT" else 8, is_demo=True))
     db.add(KPI(department_id=dep_prod.id, name="Своевременность заказов", period=today().strftime("%Y-%m"), target=95, actual=87, unit="%", is_demo=True))
+    db.add(KPI(employee_id=emp1.id, name="Выполнение производственного плана", period=today().strftime("%Y-%m"), target=100, actual=92, unit="%", is_demo=True))
+    db.add(KPI(employee_id=emp2.id, name="Конверсия сделок", period=today().strftime("%Y-%m"), target=30, actual=24, unit="%", is_demo=True))
+    db.add(EmployeeReport(employee_id=emp2.id, submitted_at=utcnow() - timedelta(days=1), period=today().strftime("%Y-%m"),
+                           content="Провела переговоры с ТОО СтройИнвест по заказу AT-1001, согласовываем спецификацию.", is_demo=True))
 
     customer = Customer(name="ТОО СтройИнвест", segment="Строительство", contact_name="Ержан Т.",
                          contact_email="info@stroyinvest.example", is_demo=True)

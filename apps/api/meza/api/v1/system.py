@@ -38,5 +38,9 @@ async def health(db: AsyncSession = Depends(get_db)):
     except Exception as exc:  # noqa: BLE001
         checks["storage"] = {"status": "error", "error": str(exc)}
 
+    from meza.services.documents import ocr_available
+
+    checks["ocr"] = {"status": "ok"} if ocr_available() else {"status": "not_configured"}
+
     overall = "ok" if all(c["status"] in ("ok", "not_configured") for c in checks.values()) else "degraded"
     return {"status": overall, "checks": checks, "app_env": settings.app_env}

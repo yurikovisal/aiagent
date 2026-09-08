@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { CommandBar } from "./CommandBar";
+import { GlobalSearch } from "./GlobalSearch";
 
 const NAV = [
   { href: "/overview", label: "Overview" },
@@ -15,14 +16,17 @@ const NAV = [
   { href: "/procurement", label: "Procurement" },
   { href: "/finance", label: "Finance" },
   { href: "/documents", label: "Documents" },
+  { href: "/inbox", label: "Inbox" },
+  { href: "/import", label: "Import" },
   { href: "/employees", label: "Employees" },
   { href: "/approvals", label: "Approvals" },
   { href: "/ai-operations", label: "AI Operations" },
+  { href: "/users", label: "Users", permission: "manage:users" },
   { href: "/settings", label: "Settings" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, hasPermission } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -43,7 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span className="text-sm font-semibold tracking-tight">MEZA</span>
         </div>
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
-          {NAV.map((item) => {
+          {NAV.filter((item) => !item.permission || hasPermission(item.permission)).map((item) => {
             const active = pathname === item.href;
             return (
               <Link
@@ -67,8 +71,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
       <div className="flex flex-1 flex-col">
-        <header className="flex items-center gap-4 border-b border-base-border bg-base-bg px-6 py-2.5">
-          <CommandBar />
+        <header className="flex items-center gap-3 border-b border-base-border bg-base-bg px-6 py-2.5">
+          <div className="flex-1">
+            <CommandBar />
+          </div>
+          <GlobalSearch />
         </header>
         <main className="flex-1 overflow-y-auto px-6 py-6">{children}</main>
       </div>

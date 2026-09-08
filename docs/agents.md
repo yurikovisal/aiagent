@@ -93,3 +93,12 @@ which skips the approval step since a person is asserting it themselves.
 /api/v1/risks/rules/{rule_key}` (also in Settings → Risk Engine in the UI) without a code
 change or redeploy. `ensure_default_rules()` seeds sane defaults on first run; a rule can be
 disabled entirely (`enabled=false`) without removing it.
+
+## Project causal chains (§19)
+
+`meza/rules/projects.py::analyze_project_delay` walks a task's `depends_on_task_id` chain
+backwards to find the actual root cause of a delay — the earliest ancestor task that is itself
+overdue/blocked with no unmet dependency of its own — rather than just listing every overdue
+task as if they were independent. Exposed via `GET /api/v1/projects/{id}/delay-analysis` and the
+`get_project_delay_analysis` tool (used by the Project Manager agent's reasoning path for "почему
+задерживается проект X?"-style questions).

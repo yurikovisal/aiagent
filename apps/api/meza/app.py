@@ -27,6 +27,7 @@ from meza.api.v1 import (
     risks as risks_api,
     search as search_api,
     system as system_api,
+    users as users_api,
 )
 from meza.core.config import get_settings
 from meza.core.db import dispose_engine, get_engine
@@ -63,7 +64,7 @@ def create_app() -> FastAPI:
         auth_api.router, meza_chat_api.router, orders_api.router, production_api.router,
         inventory_api.router, procurement_api.router, finance_api.router, documents_api.router,
         risks_api.router, approvals_api.router, agents_api.router, system_api.router,
-        imports_api.router, inbox_api.router, search_api.router, org_api.router, memory_api.router,
+        imports_api.router, inbox_api.router, search_api.router, org_api.router, memory_api.router, users_api.router,
     ):
         app.include_router(router)
 

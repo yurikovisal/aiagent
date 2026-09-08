@@ -19,6 +19,36 @@ CLASSIFICATION_RULES: list[tuple[str, list[str]]] = [
 ]
 
 
+IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
+
+
+def ocr_available() -> bool:
+    try:
+        import pytesseract
+
+        pytesseract.get_tesseract_version()
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def ocr_image(path: Path) -> str:
+    """§18: OCR pipeline for scanned/photographed documents, when tesseract is installed on the
+    host. Tries Russian+English; falls back to English-only if the Russian language pack isn't
+    installed, and to '' (never raises) if tesseract itself is missing."""
+    try:
+        import pytesseract
+        from PIL import Image
+
+        img = Image.open(path)
+        try:
+            return pytesseract.image_to_string(img, lang="rus+eng")
+        except Exception:  # noqa: BLE001
+            return pytesseract.image_to_string(img)
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 def extract_text(path: Path, ext: str) -> str:
     try:
         if ext == ".txt" or ext == ".csv":
@@ -27,7 +57,8 @@ def extract_text(path: Path, ext: str) -> str:
             from pypdf import PdfReader
 
             reader = PdfReader(str(path))
-            return "\n".join((page.extract_text() or "") for page in reader.pages)
+            text = "\n".join((page.extract_text() or "") for page in reader.pages)
+            return text
         if ext == ".docx":
             from docx import Document as DocxDocument
 
@@ -42,6 +73,8 @@ def extract_text(path: Path, ext: str) -> str:
                 for row in ws.iter_rows(values_only=True):
                     lines.append(" ".join(str(c) for c in row if c is not None))
             return "\n".join(lines)
+        if ext in IMAGE_EXTENSIONS:
+            return ocr_image(path)
     except Exception:  # noqa: BLE001
         return ""
     return ""

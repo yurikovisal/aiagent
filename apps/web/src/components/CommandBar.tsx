@@ -19,10 +19,6 @@ export function CommandBar() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setOpen((v) => !v);
-      }
       if (e.key === "Escape") setOpen(false);
     }
     window.addEventListener("keydown", onKeyDown);
@@ -61,6 +57,17 @@ export function CommandBar() {
     }
   }, []);
 
+  useEffect(() => {
+    function onAskEvent(e: Event) {
+      const text = (e as CustomEvent<string>).detail || "";
+      setOpen(true);
+      setQuery(text);
+      ask(text);
+    }
+    window.addEventListener("meza:ask", onAskEvent);
+    return () => window.removeEventListener("meza:ask", onAskEvent);
+  }, [ask]);
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     ask(query);
@@ -82,7 +89,6 @@ export function CommandBar() {
       >
         <span className="text-sm">✦</span>
         <span>Ask MEZA...</span>
-        <kbd className="ml-auto rounded border border-base-border px-1.5 py-0.5 text-[10px]">⌘K</kbd>
       </button>
 
       {open && (

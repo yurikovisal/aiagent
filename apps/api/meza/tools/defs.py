@@ -596,3 +596,57 @@ class RememberBusinessFactTool(Tool):
 
 
 register(RememberBusinessFactTool())
+
+
+class GetProjectDelayAnalysisTool(Tool):
+    name = "get_project_delay_analysis"
+    description = (
+        "Построить причинно-следственную цепочку задержки проекта: находит корневую "
+        "просроченную/заблокированную задачу и цепочку зависимых задач, которые из-за неё стоят."
+    )
+    risk = ToolRisk.CALCULATE
+    required_permission = Permission.READ_PROJECTS
+    input_schema = {"type": "object", "properties": {"project_id": {"type": "integer"}}, "required": ["project_id"]}
+
+    async def run(self, ctx: ToolContext, project_id: int, **_) -> ToolResult:
+        from meza.rules.projects import TaskNode, analyze_project_delay
+        from meza.models import Task as TaskModel
+
+        rows = (await ctx.db.execute(select(TaskModel).where(TaskModel.project_id == project_id))).scalars().all()
+        if not rows:
+            return ToolResult(ok=False, error=f"У проекта {project_id} нет задач.")
+        nodes = [TaskNode(t.id, t.title, t.status, t.due_at, t.depends_on_task_id) for t in rows]
+        analysis = analyze_project_delay(nodes, utcnow())
+        if not analysis.root_cause:
+            return ToolResult(ok=True, data=analysis.as_dict(), summary="Явных причин задержки не найдено — просроченных или заблокированных задач нет.",
+                               sources=[_source("tasks", project_id)])
+        summary = (
+            f"Корневая причина задержки: «{analysis.root_cause.title}» ({analysis.root_cause.status}). "
+            f"Просроченных задач: {analysis.overdue_task_count}, заблокированных: {analysis.blocked_task_count}."
+        )
+        return ToolResult(ok=True, data=analysis.as_dict(), summary=summary, sources=[_source("tasks", project_id)])
+
+
+register(GetProjectDelayAnalysisTool())
+
+
+class SearchProjectsTool(Tool):
+    name = "search_projects"
+    description = "Найти проект по названию или коду."
+    risk = ToolRisk.READ
+    required_permission = Permission.READ_PROJECTS
+    input_schema = {"type": "object", "properties": {"query": {"type": "string"}, "limit": {"type": "integer"}}}
+
+    async def run(self, ctx: ToolContext, query: str = "", limit: int = 10, **_) -> ToolResult:
+        from meza.models import Project
+
+        q = select(Project)
+        if query:
+            q = q.where(Project.name.ilike(f"%{query}%") | Project.code.ilike(f"%{query}%"))
+        q = q.limit(limit)
+        rows = (await ctx.db.execute(q)).scalars().all()
+        data = [r.as_dict() for r in rows]
+        return ToolResult(ok=True, data=data, summary=f"Найдено проектов: {len(data)}.", sources=[_source("projects", "search")])
+
+
+register(SearchProjectsTool())
