@@ -1,0 +1,18 @@
+{
+  "items": [
+    {"sku": "A-1001", "name": "Болт М8х40", "zone": "A", "aisle": 1, "shelf": 2, "qty": 540, "low_stock_threshold": 100},
+    {"sku": "A-1002", "name": "Гайка М8", "zone": "A", "aisle": 1, "shelf": 3, "qty": 60, "low_stock_threshold": 100},
+    {"sku": "A-1003", "name": "Шайба 8мм", "zone": "A", "aisle": 2, "shelf": 1, "qty": 1200, "low_stock_threshold": 200},
+    {"sku": "B-2001", "name": "Кабель ВВГ 3х2.5", "zone": "B", "aisle": 1, "shelf": 1, "qty": 85, "low_stock_threshold": 50},
+    {"sku": "B-2002", "name": "Автомат 16А", "zone": "B", "aisle": 1, "shelf": 4, "qty": 12, "low_stock_threshold": 20},
+    {"sku": "B-2003", "name": "Розетка накладная", "zone": "B", "aisle": 2, "shelf": 2, "qty": 230, "low_stock_threshold": 50},
+    {"sku": "C-3001", "name": "Лист ОСБ 9мм", "zone": "C", "aisle": 1, "shelf": 1, "qty": 40, "low_stock_threshold": 15},
+    {"sku": "C-3002", "name": "Профиль ПН 50х40", "zone": "C", "aisle": 2, "shelf": 1, "qty": 300, "low_stock_threshold": 80},
+    {"sku": "C-3003", "name": "Саморез по металлу 25мм", "zone": "C", "aisle": 2, "shelf": 3, "qty": 15, "low_stock_threshold": 100},
+    {"sku": "D-4001", "name": "Перчатки рабочие", "zone": "D", "aisle": 1, "shelf": 1, "qty": 150, "low_stock_threshold": 30}
+  ],
+  "orders": [
+    {"order_id": "ORD-500", "items": ["A-1001", "A-1003", "B-2003", "D-4001"]},
+    {"order_id": "ORD-501", "items": ["C-3001", "C-3002"]}
+  ]
+}
