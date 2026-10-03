@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchSummaries, generateSummary } from '../lib/api'
 import type { ShiftSummary } from '../types'
-import { socket } from '../lib/socket'
 
 export function ShiftSummaryTab({ channelId }: { channelId: string }) {
   const [summaries, setSummaries] = useState<ShiftSummary[]>([])
@@ -9,19 +8,13 @@ export function ShiftSummaryTab({ channelId }: { channelId: string }) {
 
   useEffect(() => {
     fetchSummaries(channelId).then(setSummaries)
-    function onNew(s: ShiftSummary) {
-      if (s.channelId === channelId) setSummaries((prev) => [...prev, s])
-    }
-    socket.on('summary:new', onNew)
-    return () => {
-      socket.off('summary:new', onNew)
-    }
   }, [channelId])
 
   async function handleGenerate() {
     setLoading(true)
     try {
-      await generateSummary(channelId)
+      const summary = await generateSummary(channelId)
+      setSummaries((prev) => [...prev, summary])
     } finally {
       setLoading(false)
     }

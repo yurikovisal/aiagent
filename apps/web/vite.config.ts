@@ -8,7 +8,6 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:8787',
       '/uploads': 'http://localhost:8787',
-      '/socket.io': { target: 'http://localhost:8787', ws: true },
     },
   },
 })

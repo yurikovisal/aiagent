@@ -2,6 +2,9 @@ node_modules
 dist
 apps/server/data
 apps/server/uploads
+apps/server/public
+apps/server/.vercel
+.vercel
 *.tsbuildinfo
 apps/web/vite.config.js
 apps/web/vite.config.d.ts

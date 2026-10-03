@@ -5,7 +5,8 @@ import { loadIdentity, saveIdentity } from './lib/identity'
 import { IdentityGate } from './components/IdentityGate'
 import { ChannelList } from './components/ChannelList'
 import { ChannelView } from './components/ChannelView'
-import { socket } from './lib/socket'
+
+const CHANNEL_LIST_POLL_MS = 5000
 
 export default function App() {
   const [identity, setIdentity] = useState<Identity | null>(() => loadIdentity())
@@ -13,16 +14,16 @@ export default function App() {
   const [activeChannel, setActiveChannel] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!identity) return
-    fetchChannels().then(setChannels)
-    const refresh = () => fetchChannels().then(setChannels)
-    socket.on('message:new', refresh)
-    socket.on('channel:update', refresh)
+    if (!identity || activeChannel) return
+    let cancelled = false
+    const refresh = () => fetchChannels().then((c) => !cancelled && setChannels(c))
+    refresh()
+    const interval = setInterval(refresh, CHANNEL_LIST_POLL_MS)
     return () => {
-      socket.off('message:new', refresh)
-      socket.off('channel:update', refresh)
+      cancelled = true
+      clearInterval(interval)
     }
-  }, [identity])
+  }, [identity, activeChannel])
 
   if (!identity) {
     return <IdentityGate onSubmit={(name) => setIdentity(saveIdentity(name))} />

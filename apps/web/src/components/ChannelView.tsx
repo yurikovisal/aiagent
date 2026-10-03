@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Channel, Identity, Message } from '../types'
 import { fetchChannel, joinChannel, sendTextMessage, sendVoiceMessage } from '../lib/api'
-import { socket } from '../lib/socket'
 import { PTTButton } from './PTTButton'
 import { MessageItem } from './MessageItem'
 import { ShiftSummaryTab } from './ShiftSummaryTab'
 
 type Tab = 'radio' | 'chat' | 'transcript' | 'summary'
+
+const MESSAGES_POLL_MS = 2000
 
 export function ChannelView({ channelId, me, onBack }: { channelId: string; me: Identity; onBack: () => void }) {
   const [channel, setChannel] = useState<Channel | null>(null)
@@ -14,35 +15,34 @@ export function ChannelView({ channelId, me, onBack }: { channelId: string; me: 
   const [tab, setTab] = useState<Tab>('radio')
   const [text, setText] = useState('')
   const listRef = useRef<HTMLDivElement>(null)
+  const lastCountRef = useRef(0)
 
   useEffect(() => {
-    let active = true
-    fetchChannel(channelId).then(({ channel, messages }) => {
-      if (!active) return
-      setChannel(channel)
-      setMessages(messages)
-    })
     joinChannel(channelId, me)
-    socket.emit('join', channelId)
-
-    function onNew(m: Message) {
-      if (m.channelId === channelId) setMessages((prev) => [...prev, m])
-    }
-    function onUpdate(patch: { id: string; translations: Message['translations'] }) {
-      setMessages((prev) => prev.map((m) => (m.id === patch.id ? { ...m, translations: patch.translations } : m)))
-    }
-    socket.on('message:new', onNew)
-    socket.on('message:update', onUpdate)
-    return () => {
-      active = false
-      socket.emit('leave', channelId)
-      socket.off('message:new', onNew)
-      socket.off('message:update', onUpdate)
-    }
   }, [channelId, me])
 
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
+    let cancelled = false
+    const poll = () => {
+      fetchChannel(channelId).then(({ channel, messages }) => {
+        if (cancelled) return
+        setChannel(channel)
+        setMessages(messages)
+      })
+    }
+    poll()
+    const interval = setInterval(poll, MESSAGES_POLL_MS)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [channelId])
+
+  useEffect(() => {
+    if (messages.length > lastCountRef.current) {
+      listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
+    }
+    lastCountRef.current = messages.length
   }, [messages, tab])
 
   if (!channel) return <div className="min-h-screen bg-ink" />
@@ -60,19 +60,21 @@ export function ChannelView({ channelId, me, onBack }: { channelId: string; me: 
       ]
 
   async function handleRecorded(blob: Blob, transcript: string | null, duration: number) {
-    await sendVoiceMessage(channelId, blob, {
+    const message = await sendVoiceMessage(channelId, blob, {
       senderId: me.id,
       senderName: me.name,
       senderColor: me.color,
       transcript,
       duration,
     })
+    setMessages((prev) => [...prev, message])
   }
 
   async function handleSendText(e: React.FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    await sendTextMessage(channelId, text.trim(), { senderId: me.id, senderName: me.name, senderColor: me.color })
+    const message = await sendTextMessage(channelId, text.trim(), { senderId: me.id, senderName: me.name, senderColor: me.color })
+    setMessages((prev) => [...prev, message])
     setText('')
   }
 
