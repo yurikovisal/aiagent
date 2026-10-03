@@ -14,6 +14,7 @@ import { summarizeShift } from './summary.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const UPLOAD_DIR = path.join(__dirname, '..', 'uploads')
+const WEB_DIST = path.join(__dirname, '..', '..', 'web', 'dist')
 fs.mkdirSync(UPLOAD_DIR, { recursive: true })
 
 const db = await getDb()
@@ -24,6 +25,12 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 app.use('/uploads', express.static(UPLOAD_DIR))
+
+// Раздаём собранный веб-клиент прямо отсюда, чтобы сервер был единой точкой
+// входа — это и есть тот URL, на который смотрит Capacitor-обёртка (Android).
+if (fs.existsSync(WEB_DIST)) {
+  app.use(express.static(WEB_DIST))
+}
 
 const upload = multer({
   storage: multer.diskStorage({
