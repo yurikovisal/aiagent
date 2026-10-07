@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "diagram-design": {
+      "source": "cathrynlavery/diagram-design",
+      "sourceType": "github",
+      "skillPath": "skills/diagram-design/SKILL.md",
+      "computedHash": "0196b287260a5a87fccda79e280d7ab54df5d822742d00c9f334395e2acff6f5"
+    },
     "remotion-best-practices": {
       "source": "remotion-dev/skills",
       "sourceType": "github",
