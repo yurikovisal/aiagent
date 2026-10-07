@@ -30,17 +30,106 @@
     .card li { margin-bottom: 0.3rem; padding-left: 0.875rem; position: relative; }
     .card li::before { content: '—'; position: absolute; left: 0; color: rgba(48,48,51,0.25); font-size: 0.75rem; }
     .footer { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(48,48,51,0.10); font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; color: var(--color-soft); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  
+    .toc { display:flex; flex-wrap:wrap; gap:0.4rem 1.2rem; margin-top:1.25rem; font-family:var(--font-mono); font-size:0.72rem; letter-spacing:0.04em; }
+    .toc a { color: var(--color-muted); text-decoration:none; border-bottom:1px solid var(--color-rule); }
+    .toc a:hover { color: var(--color-accent); }
+    .note { margin-top:0.75rem; font-size:0.8125rem; color:var(--color-muted); line-height:1.55; max-width:80ch; }
+    .note b { color: var(--color-ink); font-weight:600; }
+    .table-wrap { overflow-x:auto; margin-top:1rem; border:1px solid var(--color-rule); border-radius:8px; background:#fff; }
+    table { border-collapse:collapse; width:100%; min-width:900px; font-size:0.8125rem; }
+    th { text-align:left; font-family:var(--font-mono); font-size:0.62rem; font-weight:500; letter-spacing:0.14em; text-transform:uppercase; color:var(--color-muted); background:var(--color-paper-2); padding:0.6rem 0.75rem; border-bottom:1px solid var(--color-rule); white-space:nowrap; }
+    td { padding:0.55rem 0.75rem; border-bottom:1px solid rgba(48,48,51,0.07); vertical-align:top; line-height:1.45; }
+    tr.group td { background:rgba(110,31,42,0.05); font-weight:600; color:var(--color-accent); font-size:0.78rem; letter-spacing:0.02em; }
+    td.code { font-family:var(--font-mono); font-size:0.72rem; color:var(--color-muted); white-space:nowrap; }
+    td.qty { font-family:var(--font-mono); font-size:0.75rem; white-space:nowrap; text-align:right; }
+    .tag { display:inline-block; font-family:var(--font-mono); font-size:0.62rem; letter-spacing:0.06em; padding:1px 6px; border-radius:2px; border:1px solid rgba(48,48,51,0.25); color:var(--color-muted); margin:0 4px 2px 0; white-space:nowrap; }
+    .tag.buy { border-color:#8a5a2b; color:#8a5a2b; }
+    .tag.crit { border-color:#6e1f2a; color:#6e1f2a; }
+    .shop-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap:1rem; margin-top:1rem; }
+    .shop { background:#fff; border:1px solid var(--color-rule); border-radius:6px; padding:1.1rem 1.25rem; }
+    .shop .eyebrow { font-family:var(--font-mono); font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--color-muted); }
+    .shop h3 { font-size:0.95rem; font-weight:600; margin:0.3rem 0 0.7rem; }
+    .shop dl { font-size:0.8rem; line-height:1.5; color:var(--color-muted); }
+    .shop dt { font-family:var(--font-mono); font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--color-soft); margin-top:0.6rem; }
+    .shop dd ol, .shop dd ul { padding-left:1.1rem; }
+    .shop dd li { margin-bottom:0.15rem; }
+    .shop.focal { border-color: rgba(110,31,42,0.45); }
+    .check { list-style:none; margin-top:1rem; display:grid; grid-template-columns: repeat(auto-fill, minmax(340px,1fr)); gap:0.4rem 1.5rem; font-size:0.84rem; line-height:1.45; }
+    .check li { padding-left:1.6rem; position:relative; }
+    .check li::before { content:''; position:absolute; left:0; top:0.15rem; width:12px; height:12px; border:1.2px solid var(--color-ink); border-radius:2px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <p class="header-eyebrow">ATON+ · Игровой комплекс AT-01 · Конвейер</p>
-      <h1>Схема сборки AT-01</h1>
-      <p class="subtitle">Как детали комплекса проходят цеха конвейера и собираются на объекте. Металл идёт по критическому пути из четырёх цехов, HPL, термодерево и канаты делаются параллельно и встречаются на контрольной сборке в ОТК.</p>
+      <p class="header-eyebrow">ATON+ · Игровой комплекс AT-01 · Технологический маршрут</p>
+      <h1>Схема сборки AT-01, подробно</h1>
+      <p class="subtitle">Что делает каждый цех конвейера, какие детали и в каком порядке, как ОТК проверяет комплекс до отгрузки и как бригада собирает его на объекте. Габарит 3640 × 4140 мм, высота 3692 мм, возраст 3–12 лет.</p>
+      <nav class="toc">
+        <a href="#s1">1 · Состав</a><a href="#s2">2 · Спецификация</a><a href="#s3">3 · Маршрут</a><a href="#s4">4 · Цеха</a><a href="#s5">5 · График</a><a href="#s6">6 · ОТК</a><a href="#s7">7 · Упаковка</a><a href="#s8">8 · Монтаж</a>
+      </nav>
+      <p class="note"><b>Важно:</b> сечения, длины и количества сняты с визуализации. Перед запуском их нужно сверить с КД инженера. Живые данные конвейера (остатки, заявки, загрузка цехов) сюда не подтягивались.</p>
     </div>
 
-    <h2>1 · Маршрут по цехам</h2>
+    <h2 id="s1">1 · Состав изделия</h2>
+    <p class="subtitle">Пять сборочных единиц. Код узла идёт в маркировку каждой детали: AT-01.КБ.01, AT-01.ЛС.02 и т.д.</p>
+    <div class="diagram-container">
+        <svg class="diagram" viewBox="0 0 1120 232" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="at-01-tree-title at-01-tree-desc">
+        <title id="at-01-tree-title">AT-01: состав изделия по узлам</title>
+        <desc id="at-01-tree-desc">Игровой комплекс AT-01 делится на пять сборочных единиц: каркас с аркой, лестница, панели и крыша HPL, канатная сетка со скалодромом и горка.</desc>
+        <rect width="100%" height="100%" fill="#f4f1ee"/>
+        <line x1="560" y1="80" x2="560" y2="112" stroke="#5f5852" stroke-width="1"/>
+        <line x1="118" y1="112" x2="998" y2="112" stroke="#5f5852" stroke-width="1"/>
+        <line x1="118" y1="112" x2="118" y2="144" stroke="#5f5852" stroke-width="1"/>
+        <line x1="338" y1="112" x2="338" y2="144" stroke="#5f5852" stroke-width="1"/>
+        <line x1="558" y1="112" x2="558" y2="144" stroke="#5f5852" stroke-width="1"/>
+        <line x1="778" y1="112" x2="778" y2="144" stroke="#5f5852" stroke-width="1"/>
+        <line x1="998" y1="112" x2="998" y2="144" stroke="#5f5852" stroke-width="1"/>
+        <rect x="460" y="24" width="200" height="56" rx="6" fill="rgba(110,31,42,0.08)" stroke="#6e1f2a" stroke-width="1"/>
+        <text x="560" y="48" fill="#303033" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Игровой комплекс AT-01</text>
+        <text x="560" y="64" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">3640 × 4140 × 3692 мм · 3–12 лет</text>
+        <rect x="28" y="144" width="180" height="68" rx="6" fill="#ffffff" stroke="#303033" stroke-width="1"/>
+        <rect x="36" y="152" width="32" height="12" rx="2" fill="none" stroke="rgba(48,48,51,0.3)" stroke-width="0.8"/>
+        <text x="52" y="161" fill="#5f5852" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">КБ</text>
+        <text x="118" y="180" fill="#303033" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Каркас и арка</text>
+        <text x="118" y="195" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">8 стоек · П-арка</text>
+        <text x="118" y="206" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">рама площадки</text>
+        <rect x="248" y="144" width="180" height="68" rx="6" fill="#ffffff" stroke="#303033" stroke-width="1"/>
+        <rect x="256" y="152" width="32" height="12" rx="2" fill="none" stroke="rgba(48,48,51,0.3)" stroke-width="0.8"/>
+        <text x="272" y="161" fill="#5f5852" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ЛС</text>
+        <text x="338" y="180" fill="#303033" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Лестница</text>
+        <text x="338" y="195" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">2 косоура · 5 ступ.</text>
+        <text x="338" y="206" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">борта HPL · перила</text>
+        <rect x="468" y="144" width="180" height="68" rx="6" fill="#ffffff" stroke="#303033" stroke-width="1"/>
+        <rect x="476" y="152" width="32" height="12" rx="2" fill="none" stroke="rgba(48,48,51,0.3)" stroke-width="0.8"/>
+        <text x="492" y="161" fill="#5f5852" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ПН</text>
+        <text x="558" y="180" fill="#303033" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Панели и крыша</text>
+        <text x="558" y="195" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">HPL 19 мм · 5 пан.</text>
+        <text x="558" y="206" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">крыша Ø · иллюм.</text>
+        <rect x="688" y="144" width="180" height="68" rx="6" fill="#ffffff" stroke="#303033" stroke-width="1"/>
+        <rect x="696" y="152" width="32" height="12" rx="2" fill="none" stroke="rgba(48,48,51,0.3)" stroke-width="0.8"/>
+        <text x="712" y="161" fill="#5f5852" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">КС</text>
+        <text x="778" y="180" fill="#303033" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Сетка · скалодром</text>
+        <text x="778" y="195" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">канат Ø16 · шары</text>
+        <text x="778" y="206" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">4 зацепа</text>
+        <rect x="908" y="144" width="180" height="68" rx="6" fill="#ffffff" stroke="#303033" stroke-width="1"/>
+        <rect x="916" y="152" width="32" height="12" rx="2" fill="none" stroke="rgba(48,48,51,0.3)" stroke-width="0.8"/>
+        <text x="932" y="161" fill="#5f5852" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ГР</text>
+        <text x="998" y="180" fill="#303033" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Горка</text>
+        <text x="998" y="195" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">нерж. AISI 304</text>
+        <text x="998" y="206" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">опора выхода</text>
+        </svg>
+    </div>
+
+    <h2 id="s2">2 · Спецификация по позициям</h2>
+    <p class="subtitle">Маршрут показывает цеха, через которые проходит деталь, в порядке обработки.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Код</th><th>Деталь</th><th>Материал</th><th>Кол-во</th><th>Маршрут</th><th>Примечание</th></tr></thead>
+      <tbody><tr class="group"><td colspan="6">КБ · Каркас башни и арка</td></tr><tr><td class="code">КБ.01</td><td>Стойка арочная</td><td>труба 100×100×4, Ст3</td><td class="qty">2</td><td><span class="tag">ЧПУ металл</span><span class="tag">Сварочный</span><span class="tag">Шлифовка</span><span class="tag">Малярка</span></td><td>L≈3500, сварка в П-раму с ригелем</td></tr><tr><td class="code">КБ.02</td><td>Ригель арки</td><td>труба 100×100×4</td><td class="qty">1</td><td><span class="tag">ЧПУ металл</span><span class="tag">Сварочный</span></td><td>рез под углом, на кондукторе</td></tr><tr><td class="code">КБ.03</td><td>Стойка площадки</td><td>труба 100×100×4</td><td class="qty">2</td><td><span class="tag">ЧПУ металл</span><span class="tag">Сварочный</span><span class="tag">Шлифовка</span><span class="tag">Малярка</span></td><td>L≈2200</td></tr><tr><td class="code">КБ.04</td><td>Стойка лестницы</td><td>труба 100×100×4</td><td class="qty">2</td><td><span class="tag">ЧПУ металл</span><span class="tag">Сварочный</span><span class="tag">Шлифовка</span><span class="tag">Малярка</span></td><td>L≈1300</td></tr><tr><td class="code">КБ.05</td><td>Стойка ограждения у горки</td><td>труба 100×100×4</td><td class="qty">2</td><td><span class="tag">ЧПУ металл</span><span class="tag">Сварочный</span><span class="tag">Шлифовка</span><span class="tag">Малярка</span></td><td>L≈1900</td></tr><tr><td class="code">КБ.06</td><td>Опорный фланец</td><td>лист 8 мм, 250×250, 4 отв. Ø14</td><td class="qty">8</td><td><span class="tag">ЧПУ металл</span><span class="tag">Сварочный</span></td><td>приварить к каждой стойке, контроль 90°</td></tr><tr><td class="code">КБ.07</td><td>Рама площадки</td><td>труба 60×40×3</td><td class="qty">1 СЕ</td><td><span class="tag">ЧПУ металл</span><span class="tag">Сварочный</span><span class="tag">Шлифовка</span><span class="tag">Малярка</span></td><td>≈1000×1000, высота площадки уточнить по КД</td></tr><tr><td class="code">КБ.08</td><td>Настил площадки</td><td>лист рифлёный 4 мм / HPL — уточнить</td><td class="qty">1</td><td><span class="tag">ЧПУ металл</span><span class="tag">Малярка</span></td><td>в визуализации графит</td></tr><tr><td class="code">КБ.09</td><td>Кронштейн крыши</td><td>лист 6 мм</td><td class="qty">3</td><td><span class="tag">ЧПУ металл</span><span class="tag">Сварочный</span></td><td>к ригелю арки</td></tr><tr><td class="code">КБ.10</td><td>Перила верхние</td><td>термодерево 120×40</td><td class="qty">3</td><td><span class="tag">Столярка</span></td><td>масло с УФ, 2 слоя</td></tr><tr><td class="code">КБ.11</td><td>Поручень у горки</td><td>нерж. труба Ø32</td><td class="qty">1</td><td><span class="tag">Сварочный</span></td><td>TIG, или закуп готового</td></tr><tr><td class="code">КБ.12</td><td>Заглушка стойки 100×100</td><td>пластик</td><td class="qty">6</td><td><span class="tag buy">ЗАКУП</span></td><td>на стойки без арки</td></tr><tr class="group"><td colspan="6">ЛС · Лестница</td></tr><tr><td class="code">ЛС.01</td><td>Косоур</td><td>лист 8 мм, графит</td><td class="qty">2</td><td><span class="tag">ЧПУ металл</span><span class="tag">Сварочный</span><span class="tag">Шлифовка</span><span class="tag">Малярка</span></td><td>полки под ступени</td></tr><tr><td class="code">ЛС.02</td><td>Ступень</td><td>лист рифлёный 4 мм, отбортовка</td><td class="qty">5</td><td><span class="tag">ЧПУ металл</span><span class="tag">Малярка</span></td><td>гиб на листогибе; на болтах к косоурам</td></tr><tr><td class="code">ЛС.03</td><td>Борт лестницы с прорезями</td><td>HPL 19 мм, каменно-серый</td><td class="qty">2</td><td><span class="tag">ЧПУ дерево</span></td><td>трапеция, 3–4 овальных прорези</td></tr><tr><td class="code">ЛС.04</td><td>Перила лестницы</td><td>термодерево 120×40</td><td class="qty">2</td><td><span class="tag">Столярка</span></td><td>торцы скруглить R≥3</td></tr><tr class="group"><td colspan="6">ПН · Панели и крыша HPL</td></tr><tr><td class="code">ПН.01</td><td>Панель с иллюминатором</td><td>HPL 19 мм</td><td class="qty">1</td><td><span class="tag">ЧПУ дерево</span></td><td>вырез Ø под иллюминатор</td></tr><tr><td class="code">ПН.02</td><td>Иллюминатор</td><td>полусфера + нерж. кольцо</td><td class="qty">1</td><td><span class="tag buy">ЗАКУП</span></td><td>входной контроль ОТК</td></tr><tr><td class="code">ПН.03</td><td>Панель с прорезями</td><td>HPL 19 мм</td><td class="qty">2</td><td><span class="tag">ЧПУ дерево</span></td><td>у иллюминатора и у горки</td></tr><tr><td class="code">ПН.04</td><td>Панель скалодрома</td><td>HPL 19 мм</td><td class="qty">1</td><td><span class="tag">ЧПУ дерево</span></td><td>отверстия под 4 зацепа</td></tr><tr><td class="code">ПН.05</td><td>Крыша круглая с 3 отверстиями</td><td>HPL 19 мм, Ø≈1500</td><td class="qty">1</td><td><span class="tag">ЧПУ дерево</span></td><td>фаска по контуру</td></tr><tr class="group"><td colspan="6">КС · Канатная сетка и скалодром</td></tr><tr><td class="code">КС.01</td><td>Рамка сетки</td><td>труба 40×40, графит</td><td class="qty">1 СЕ</td><td><span class="tag">ЧПУ металл</span><span class="tag">Сварочный</span><span class="tag">Малярка</span></td><td>или крепление сетки прямо к стойкам</td></tr><tr><td class="code">КС.02</td><td>Канат армированный</td><td>Ø16 мм, графит</td><td class="qty">≈30 м</td><td><span class="tag">Канатный</span></td><td>длина по шагу сетки</td></tr><tr><td class="code">КС.03</td><td>Соединитель-шар</td><td>пластик / алюминий</td><td class="qty">≈20</td><td><span class="tag buy">ЗАКУП</span><span class="tag">Канатный</span></td><td>опрессовка на канате</td></tr><tr><td class="code">КС.04</td><td>Коуш, натяжная втулка</td><td>сталь оцинк.</td><td class="qty">≈16</td><td><span class="tag buy">ЗАКУП</span><span class="tag">Канатный</span></td><td>крепление к рамке</td></tr><tr><td class="code">КС.05</td><td>Зацеп скалодрома</td><td>термодерево</td><td class="qty">4</td><td><span class="tag">Столярка</span></td><td>крепёж изнутри панели</td></tr><tr class="group"><td colspan="6">ГР · Горка</td></tr><tr><td class="code">ГР.01</td><td>Скат горки</td><td>нерж. AISI 304, L≈2700</td><td class="qty">1</td><td><span class="tag buy">ЗАКУП</span></td><td>свой цех или закуп — уточнить</td></tr><tr><td class="code">ГР.02</td><td>Опора выхода горки</td><td>нерж. лист + ножка</td><td class="qty">1</td><td><span class="tag buy">ЗАКУП</span></td><td>выход без острых кромок</td></tr><tr class="group"><td colspan="6">КР · Крепёж (комплект на объект)</td></tr><tr><td class="code">КР.01</td><td>Болт антивандальный М10 A2</td><td>нерж.</td><td class="qty">≈80</td><td><span class="tag buy">ЗАКУП</span></td><td>панели, перила, ступени</td></tr><tr><td class="code">КР.02</td><td>Гайка колпачковая М10 A2</td><td>нерж.</td><td class="qty">≈80</td><td><span class="tag buy">ЗАКУП</span></td><td></td></tr><tr><td class="code">КР.03</td><td>Анкер М12×120</td><td>сталь оцинк.</td><td class="qty">32</td><td><span class="tag buy">ЗАКУП</span></td><td>8 фланцев × 4</td></tr><tr><td class="code">КР.04</td><td>Шайбы, гроверы М10/М12</td><td>нерж.</td><td class="qty">комплект</td><td><span class="tag buy">ЗАКУП</span></td><td>+10 % запас</td></tr></tbody>
+    </table></div>
+
+    <h2 id="s3">3 · Маршрут по цехам</h2>
     <div class="diagram-container">
       <svg class="diagram" viewBox="0 0 1120 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="at-01-assembly-title at-01-assembly-desc">
         <title id="at-01-assembly-title">AT-01: маршрут деталей по цехам</title>
@@ -166,8 +255,107 @@
       </svg>
     </div>
 
-    <h2>2 · Монтаж на объекте</h2>
-    <p class="subtitle">Выездная бригада, по маркировке с контрольной сборки. Габарит комплекса 3640 × 4140 мм, высота 3692 мм.</p>
+    <h2 id="s4">4 · Технологическая карта цехов</h2>
+    <p class="subtitle">Для каждого цеха: что приходит, что делать, что отдать дальше и что проверить перед передачей.</p>
+    <div class="shop-grid"><div class="shop"><p class="eyebrow">Цех 0 · Склад</p><h3>Комплектация заказа</h3><dl>
+<dt>Получает</dt><dd>спецификация AT-01 от инженера</dd><dt>Операции</dt><dd><ol><li>Зарезервировать металл, HPL, термодерево, канат по спецификации</li><li>Выдать материал в цеха по заявкам</li><li>Оформить заявки на закуп: горка, иллюминатор, шары, крепёж</li><li>Принять покупные и передать в ОТК на входной контроль</li></ol></dd><dt>Отдаёт</dt><dd>материал в 4 цеха; покупные в ОТК</dd><dt>Контроль</dt><dd><ul><li>остатки покрывают заказ</li><li>сертификаты на HPL, канат, горку</li></ul></dd></dl></div><div class="shop"><p class="eyebrow">Цех 1 · ЧПУ металл</p><h3>Резка и сверловка</h3><dl>
+<dt>Получает</dt><dd>труба 100×100, 60×40, 40×40; лист 4–8 мм</dd><dt>Операции</dt><dd><ol><li>Раскрой трубы: стойки КБ.01–05 (8 шт), ригель, рама</li><li>Плазма или лазер по листу: фланцы 8, кронштейны 3, косоуры 2, ступени 5</li><li>Сверловка отверстий под панели и перила по шаблону</li><li>Гиб ступеней с отбортовкой</li><li>Маркировка деталей кодом позиции</li></ol></dd><dt>Отдаёт</dt><dd>комплект деталей каркаса в сварочный</dd><dt>Контроль</dt><dd><ul><li>длины ±1 мм</li><li>отверстия ±0,5 мм, по шаблону</li><li>заусенцы сняты</li></ul></dd></dl></div><div class="shop"><p class="eyebrow">Цех 2 · Сварочный</p><h3>Сварка узлов</h3><dl>
+<dt>Получает</dt><dd>детали с ЧПУ металл</dd><dt>Операции</dt><dd><ol><li>Стойки + опорные фланцы (8 шт), угол 90°</li><li>П-рама арки на кондукторе: 2 стойки + ригель</li><li>Рама площадки, рамка сетки</li><li>Косоуры с полками под ступени</li><li>Кронштейны крыши к ригелю</li></ol></dd><dt>Отдаёт</dt><dd>сварные узлы в шлифовку</dd><dt>Контроль</dt><dd><ul><li>диагонали рам ±2 мм</li><li>вертикальность стоек</li><li>швы сплошные, без пор и подрезов</li></ul></dd></dl></div><div class="shop"><p class="eyebrow">Цех 3 · Шлифовка</p><h3>Подготовка поверхности</h3><dl>
+<dt>Получает</dt><dd>сварные узлы</dd><dt>Операции</dt><dd><ol><li>Зачистка швов заподлицо</li><li>Скругление кромок и углов R≥3</li><li>Удаление брызг и окалины</li><li>Обезжиривание перед покраской</li></ol></dd><dt>Отдаёт</dt><dd>чистый металл в малярку</dd><dt>Контроль</dt><dd><ul><li>нет острых кромок (детская площадка)</li><li>поверхность без окалины</li></ul></dd></dl></div><div class="shop focal"><p class="eyebrow">Цех 4 · Малярка</p><h3>Порошковая окраска</h3><dl>
+<dt>Получает</dt><dd>узлы после шлифовки</dd><dt>Операции</dt><dd><ol><li>Подготовка: пескоструй или фосфатирование</li><li>Порошок бордовый #6E1F2A: стойки, арка, рама</li><li>Порошок графит #303033: лестница, ступени, рамка сетки, настил</li><li>Полимеризация в печи по паспорту порошка</li><li>Остывание, защитная упаковка рёбер</li></ol></dd><dt>Отдаёт</dt><dd>окрашенный каркас в ОТК</dd><dt>Контроль</dt><dd><ul><li>толщина покрытия по паспорту порошка</li><li>адгезия (решётчатый надрез)</li><li>цвет по эталону RAL</li></ul></dd></dl></div><div class="shop"><p class="eyebrow">Цех 5 · ЧПУ дерево</p><h3>Раскрой HPL</h3><dl>
+<dt>Получает</dt><dd>плиты HPL 19 мм каменно-серый</dd><dt>Операции</dt><dd><ol><li>Раскрой: крыша Ø, панели ПН.01–04, борта ЛС.03</li><li>Фрезеровка прорезей и выреза под иллюминатор</li><li>Сверловка под крепёж и зацепы</li><li>Фаска по всем кромкам</li><li>Плёнка на лицевую сторону, маркировка</li></ol></dd><dt>Отдаёт</dt><dd>комплект HPL в ОТК</dd><dt>Контроль</dt><dd><ul><li>контур по программе ±0,5 мм</li><li>кромки без сколов</li></ul></dd></dl></div><div class="shop"><p class="eyebrow">Цех 6 · Столярка</p><h3>Термодерево</h3><dl>
+<dt>Получает</dt><dd>доска термодерево 120×40</dd><dt>Операции</dt><dd><ol><li>Торцовка и строжка перил (5 шт)</li><li>Изготовление зацепов скалодрома (4 шт)</li><li>Скругление торцов R≥3, шлифовка P120→P180</li><li>Масло с УФ-защитой, 2 слоя</li><li>Сушка 24 ч между слоями</li></ol></dd><dt>Отдаёт</dt><dd>перила и зацепы в ОТК</dd><dt>Контроль</dt><dd><ul><li>влажность и трещины</li><li>нет заноз, торцы обработаны</li></ul></dd></dl></div><div class="shop"><p class="eyebrow">Цех 7 · Канатный</p><h3>Канатная сетка</h3><dl>
+<dt>Получает</dt><dd>канат Ø16, шары, коуши</dd><dt>Операции</dt><dd><ol><li>Нарезка каната с запасом на заделку</li><li>Сборка сетки на шаблоне, опрессовка шаров</li><li>Заделка концов, коуши</li><li>Пробное натяжение на рамке</li></ol></dd><dt>Отдаёт</dt><dd>сетка в ОТК</dd><dt>Контроль</dt><dd><ul><li>ячейки: проверка на застревание головы и пальцев по ГОСТ EN 1176-1</li><li>прочность опрессовки</li></ul></dd></dl></div></div>
+
+    <h2 id="s5">5 · График производства</h2>
+    <p class="subtitle">Ориентир на одну смену, при свободных цехах. Нормы времени уточнить у мастеров по факту первого комплекса.</p>
+    <div class="diagram-container">
+        <svg class="diagram" viewBox="0 0 1120 568" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="at-01-gantt-title at-01-gantt-desc">
+        <title id="at-01-gantt-title">AT-01: график производства по дням</title>
+        <desc id="at-01-gantt-desc">Ориентировочный график на десять рабочих дней: металл идёт последовательно через четыре цеха до пятого дня, дерево, HPL и канаты параллельно, контрольная сборка на шестой день и монтаж на восьмой–девятый.</desc>
+        <rect width="100%" height="100%" fill="#f4f1ee"/>
+        <line x1="240" y1="64" x2="240" y2="504" stroke="rgba(48,48,51,0.22)" stroke-width="1"/>
+        <text x="282" y="52" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ДЕНЬ 1</text>
+        <line x1="324" y1="64" x2="324" y2="504" stroke="rgba(48,48,51,0.1)" stroke-width="1"/>
+        <text x="366" y="52" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ДЕНЬ 2</text>
+        <line x1="408" y1="64" x2="408" y2="504" stroke="rgba(48,48,51,0.1)" stroke-width="1"/>
+        <text x="450" y="52" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ДЕНЬ 3</text>
+        <line x1="492" y1="64" x2="492" y2="504" stroke="rgba(48,48,51,0.1)" stroke-width="1"/>
+        <text x="534" y="52" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ДЕНЬ 4</text>
+        <line x1="576" y1="64" x2="576" y2="504" stroke="rgba(48,48,51,0.1)" stroke-width="1"/>
+        <text x="618" y="52" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ДЕНЬ 5</text>
+        <line x1="660" y1="64" x2="660" y2="504" stroke="rgba(48,48,51,0.22)" stroke-width="1"/>
+        <text x="702" y="52" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ДЕНЬ 6</text>
+        <line x1="744" y1="64" x2="744" y2="504" stroke="rgba(48,48,51,0.1)" stroke-width="1"/>
+        <text x="786" y="52" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ДЕНЬ 7</text>
+        <line x1="828" y1="64" x2="828" y2="504" stroke="rgba(48,48,51,0.1)" stroke-width="1"/>
+        <text x="870" y="52" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ДЕНЬ 8</text>
+        <line x1="912" y1="64" x2="912" y2="504" stroke="rgba(48,48,51,0.1)" stroke-width="1"/>
+        <text x="954" y="52" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ДЕНЬ 9</text>
+        <line x1="996" y1="64" x2="996" y2="504" stroke="rgba(48,48,51,0.1)" stroke-width="1"/>
+        <text x="1038" y="52" fill="#5f5852" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ДЕНЬ 10</text>
+        <line x1="1080" y1="64" x2="1080" y2="504" stroke="rgba(48,48,51,0.22)" stroke-width="1"/>
+        <line x1="20" y1="64" x2="1080" y2="64" stroke="rgba(48,48,51,0.22)" stroke-width="1"/>
+        <line x1="20" y1="72" x2="1080" y2="72" stroke="rgba(48,48,51,0.10)" stroke-width="1"/>
+        <text x="20" y="86" fill="#8a817a" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.18em">СКЛАД</text>
+        <text x="120" y="94" fill="#303033" font-size="11" font-weight="600" font-family="'Geist', sans-serif">Комплектация</text>
+        <rect x="242" y="80" width="38.0" height="20" rx="4" fill="rgba(95,88,82,0.15)" stroke="#5f5852" stroke-width="1"/>
+        <text x="120" y="130" fill="#303033" font-size="11" font-weight="600" font-family="'Geist', sans-serif">Закуп покупных</text>
+        <rect x="242" y="116" width="416" height="20" rx="4" fill="rgba(138,90,43,0.10)" stroke="#8a5a2b" stroke-width="1" stroke-dasharray="5,4"/>
+        <line x1="20" y1="144" x2="1080" y2="144" stroke="rgba(48,48,51,0.10)" stroke-width="1"/>
+        <text x="20" y="158" fill="#8a817a" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.18em">МЕТАЛЛ</text>
+        <text x="120" y="166" fill="#303033" font-size="11" font-weight="600" font-family="'Geist', sans-serif">ЧПУ металл</text>
+        <rect x="284.0" y="152" width="80.0" height="20" rx="4" fill="rgba(95,88,82,0.15)" stroke="#5f5852" stroke-width="1"/>
+        <text x="120" y="202" fill="#303033" font-size="11" font-weight="600" font-family="'Geist', sans-serif">Сварочный</text>
+        <rect x="368.0" y="188" width="164.0" height="20" rx="4" fill="rgba(95,88,82,0.15)" stroke="#5f5852" stroke-width="1"/>
+        <text x="120" y="238" fill="#303033" font-size="11" font-weight="600" font-family="'Geist', sans-serif">Шлифовка</text>
+        <rect x="536.0" y="224" width="38.0" height="20" rx="4" fill="rgba(95,88,82,0.15)" stroke="#5f5852" stroke-width="1"/>
+        <text x="120" y="274" fill="#303033" font-size="11" font-weight="600" font-family="'Geist', sans-serif">Малярка</text>
+        <rect x="578" y="260" width="80" height="20" rx="4" fill="rgba(110,31,42,0.12)" stroke="#6e1f2a" stroke-width="1"/>
+        <line x1="20" y1="288" x2="1080" y2="288" stroke="rgba(48,48,51,0.10)" stroke-width="1"/>
+        <text x="20" y="302" fill="#8a817a" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ДЕРЕВО · HPL</text>
+        <text x="120" y="310" fill="#303033" font-size="11" font-weight="600" font-family="'Geist', sans-serif">ЧПУ дерево</text>
+        <rect x="284.0" y="296" width="80.0" height="20" rx="4" fill="rgba(95,88,82,0.15)" stroke="#5f5852" stroke-width="1"/>
+        <text x="120" y="346" fill="#303033" font-size="11" font-weight="600" font-family="'Geist', sans-serif">Столярка + масло</text>
+        <rect x="368.0" y="332" width="122.0" height="20" rx="4" fill="rgba(95,88,82,0.15)" stroke="#5f5852" stroke-width="1"/>
+        <line x1="20" y1="360" x2="1080" y2="360" stroke="rgba(48,48,51,0.10)" stroke-width="1"/>
+        <text x="20" y="374" fill="#8a817a" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.18em">КАНАТЫ</text>
+        <text x="120" y="382" fill="#303033" font-size="11" font-weight="600" font-family="'Geist', sans-serif">Канатный</text>
+        <rect x="284.0" y="368" width="122.0" height="20" rx="4" fill="rgba(95,88,82,0.15)" stroke="#5f5852" stroke-width="1"/>
+        <line x1="20" y1="396" x2="1080" y2="396" stroke="rgba(48,48,51,0.10)" stroke-width="1"/>
+        <text x="20" y="410" fill="#8a817a" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ОТК</text>
+        <text x="120" y="418" fill="#303033" font-size="11" font-weight="600" font-family="'Geist', sans-serif">Контрольная сборка</text>
+        <rect x="662" y="404" width="80" height="20" rx="4" fill="rgba(95,88,82,0.15)" stroke="#5f5852" stroke-width="1"/>
+        <text x="120" y="454" fill="#303033" font-size="11" font-weight="600" font-family="'Geist', sans-serif">Упаковка, отгрузка</text>
+        <rect x="746" y="440" width="38.0" height="20" rx="4" fill="rgba(95,88,82,0.15)" stroke="#5f5852" stroke-width="1"/>
+        <line x1="20" y1="468" x2="1080" y2="468" stroke="rgba(48,48,51,0.10)" stroke-width="1"/>
+        <text x="20" y="482" fill="#8a817a" font-size="7" font-family="'Geist Mono', monospace" letter-spacing="0.18em">ОБЪЕКТ</text>
+        <text x="120" y="490" fill="#303033" font-size="11" font-weight="600" font-family="'Geist', sans-serif">Монтаж бригадой</text>
+        <rect x="830" y="476" width="164" height="20" rx="4" fill="rgba(95,88,82,0.15)" stroke="#5f5852" stroke-width="1"/>
+        <line x1="786.0" y1="64" x2="786.0" y2="504" stroke="#6e1f2a" stroke-width="1" stroke-dasharray="4,3"/>
+        <rect x="792.0" y="512" width="104" height="12" rx="2" fill="#f4f1ee"/>
+        <text x="796.0" y="521" fill="#6e1f2a" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.06em">ОТГРУЗКА · Д7</text>
+        <rect x="20" y="544" width="20" height="10" rx="2" fill="rgba(95,88,82,0.15)" stroke="#5f5852"/>
+        <text x="46" y="553" fill="#5f5852" font-size="8.5" font-family="'Geist', sans-serif">Операция цеха</text>
+        <rect x="160" y="544" width="20" height="10" rx="2" fill="rgba(110,31,42,0.12)" stroke="#6e1f2a"/>
+        <text x="186" y="553" fill="#5f5852" font-size="8.5" font-family="'Geist', sans-serif">Конец критического пути</text>
+        <rect x="340" y="544" width="20" height="10" rx="2" fill="rgba(138,90,43,0.10)" stroke="#8a5a2b" stroke-dasharray="5,4"/>
+        <text x="366" y="553" fill="#5f5852" font-size="8.5" font-family="'Geist', sans-serif">Закуп (срок поставщика)</text>
+        </svg>
+    </div>
+
+    <h2 id="s6">6 · Контрольная сборка в ОТК</h2>
+    <p class="subtitle">Комплекс собирают в цехе целиком по шагам монтажа, проверяют, маркируют узлы, разбирают и упаковывают.</p>
+    <ul class="check"><li>Покупные прошли входной контроль: горка, иллюминатор, шары, крепёж</li><li>Каркас стоит без перекосов, диагонали ±2 мм</li><li>Все отверстия совпали: панели, перила, ступени без доработки</li><li>Нет острых кромок и выступающих болтов (колпачковые гайки)</li><li>Зазоры между панелями и стойками без защемления пальцев</li><li>Сетка: ячейки проверены щупами на застревание</li><li>Стык горки с площадкой без перепада и щели</li><li>Цвет и покрытие без сколов после сборки</li><li>Каждый узел промаркирован кодом AT-01.XX.NN</li><li>Фото сборки и ведомость упаковки приложены к паспорту</li></ul>
+
+    <h2 id="s7">7 · Упаковка и места отгрузки</h2>
+    <div class="table-wrap"><table style="min-width:640px">
+      <thead><tr><th>Место</th><th>Состав</th><th>Упаковка</th></tr></thead>
+      <tbody><tr><td class="code">М-1</td><td>П-арка, стойки, фланцы</td><td>стрейч, уголки на рёбра, бирка</td></tr><tr><td class="code">М-2</td><td>Рама площадки, настил, косоуры, ступени, рамка сетки</td><td>стрейч, бирка</td></tr><tr><td class="code">М-3</td><td>HPL: крыша, панели, борта</td><td>поддон, прокладки между листами, плёнка</td></tr><tr><td class="code">М-4</td><td>Горка и опора выхода</td><td>короб или плёнка, защита ската</td></tr><tr><td class="code">М-5</td><td>Перила и зацепы из термодерева</td><td>плёнка, бирка</td></tr><tr><td class="code">М-6</td><td>Канатная сетка</td><td>мешок, бирка</td></tr><tr><td class="code">М-7</td><td>Крепёж + ведомость + паспорт</td><td>ящик, опись по позициям КР</td></tr></tbody>
+    </table></div>
+
+    <h2 id="s8">8 · Монтаж на объекте</h2>
+    <p class="subtitle">Выездная бригада 3 человека, ориентир 2 дня без учёта бетонирования.</p>
     <div class="diagram-container">
       <svg class="diagram" viewBox="0 0 1120 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="at-01-install-title at-01-install-desc">
         <title id="at-01-install-title">AT-01: порядок монтажа</title>
@@ -247,28 +435,14 @@
         <text x="24" y="168" fill="#5f5852" font-size="14" font-style="italic" font-family="'Instrument Serif', 'Noto Serif', serif">Шаги 02 и 08 — точки контроля: без проверки анкеровки и итоговой приёмки комплекс не открывают для детей.</text>
       </svg>
     </div>
-
-    <div class="cards">
-      <div class="card">
-        <p class="eyebrow">Главное</p>
-        <div class="card-header"><span class="card-dot coral"></span><h3>Срок задаёт металл</h3></div>
-        <p>Каркас проходит четыре цеха подряд: ЧПУ, сварка, шлифовка, порошковая окраска. HPL, термодерево и сетку запускают одновременно с резкой металла — они должны быть готовы к выходу каркаса из малярки.</p>
-      </div>
-      <div class="card">
-        <p class="eyebrow">Закуп</p>
-        <div class="card-header"><span class="card-dot muted"></span><h3>Покупные в комплект</h3></div>
-        <ul><li>Горка из нержавеющей стали</li><li>Иллюминатор (полусфера)</li><li>Крепёж A2, антивандальный</li><li>Анкеры, заглушки, зацепы</li></ul>
-      </div>
-      <div class="card">
-        <p class="eyebrow">Уточнить</p>
-        <div class="card-header"><span class="card-dot ink"></span><h3>Сверить с КД инженера</h3></div>
-        <p>Сечение профиля, тип анкеров, RAL под #6E1F2A и шаг сетки взяты по визуализации. Делает ли горку свой цех или её покупают — тоже уточнить.</p>
-      </div>
-    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Шаг</th><th>Что делаем</th><th>Инструмент, крепёж</th><th>Позиции</th><th>Контроль</th></tr></thead>
+      <tbody><tr><td class="code">01</td><td>Основание: разметка осей 3640×4140, зона безопасности, проверка покрытия или фундамента</td><td>рулетка, нивелир, разметка</td><td>—</td><td>основание ровное, зона свободна</td></tr><tr><td class="code">02</td><td>Стойки на анкеры: 8 стоек по осям, сначала П-арка, затем остальные</td><td>перфоратор, анкеры М12×120 (32), уровень</td><td>КР.03</td><td><span class="tag crit">КОНТРОЛЬ</span> вертикаль, момент затяжки</td></tr><tr><td class="code">03</td><td>Рама площадки и настил между стойками</td><td>болты М10 A2, ключи</td><td>КБ.07, КБ.08</td><td>горизонт площадки</td></tr><tr><td class="code">04</td><td>Панели HPL: иллюминатор, панели с прорезями, скалодром</td><td>антивандальный крепёж, бита</td><td>ПН.01–04</td><td>зазоры, колпачки</td></tr><tr><td class="code">05</td><td>Лестница: косоуры, ступени, борта HPL, перила</td><td>болты М10, ключи</td><td>ЛС.01–04</td><td>ступени без люфта</td></tr><tr><td class="code">06</td><td>Канатная сетка на рамку или стойки, натяжение; зацепы скалодрома</td><td>коуши, натяжители</td><td>КС.01–05</td><td>натяжение равномерное</td></tr><tr><td class="code">07</td><td>Горка: крепление к площадке и опора выхода</td><td>болты М10 A2</td><td>ГР.01–02</td><td>стык без перепада</td></tr><tr><td class="code">08</td><td>Крыша на кронштейны арки, верхние перила, заглушки</td><td>болты М10 A2</td><td>ПН.05, КБ.10, КБ.12</td><td><span class="tag crit">ПРИЁМКА</span> ОТК, паспорт, табличка</td></tr></tbody>
+    </table></div>
 
     <div class="footer">
-      <span>ATON+ · AT-01 · схема сборки</span>
-      <span>цеха конвейера aimeza.online</span>
+      <span>ATON+ · AT-01 · схема сборки, подробно</span>
+      <span>проектируем сегодня лучшее завтра</span>
     </div>
   </div>
 </body>
