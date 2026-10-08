@@ -1,0 +1,16 @@
+{
+  "name": "ratsiya",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Рация — кросс-платформенная push-to-talk рация для семьи и смены, с ИИ-транскрипцией и переводом RU/KZ/EN",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n SERVER,WEB -c \"blue,green\" \"npm run dev -w apps/server\" \"npm run dev -w apps/web\"",
+    "build": "npm run build -w apps/web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
